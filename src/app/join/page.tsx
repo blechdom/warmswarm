@@ -8,7 +8,7 @@ const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #d946ef 0%, #a855f7 50%, #8b5cf6 100%);
   padding: 20px;
   box-sizing: border-box;
   position: relative;
@@ -25,24 +25,26 @@ const SwarmGraphic = styled.div`
   z-index: 1;
 `;
 
-const SwarmDot = styled.div<{ size: number; left: number; delay: number; opacity: number; speed: number }>`
+const SwarmDot = styled.div<{ $size: number; $left: number; $delay: number; $opacity: number; $speed: number; $angle: number }>`
   position: absolute;
-  width: ${props => props.size}px;
-  height: ${props => props.size}px;
-  background: rgba(255, 255, 255, ${props => props.opacity});
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  background: rgba(255, 255, 255, ${props => props.$opacity});
   border-radius: 50%;
-  left: ${props => props.left}%;
-  bottom: ${props => Math.random() * 180}px;
-  animation: swarm ${props => props.speed}s ease-in-out infinite ${props => props.delay}s;
+  left: ${props => props.$left}%;
+  bottom: ${props => Math.random() * 160}px;
+  animation: swarmMovement ${props => props.$speed}s ease-in-out infinite ${props => props.$delay}s;
   
-  @keyframes swarm {
-    0% { transform: translateY(0px) translateX(0px) scale(1); }
-    15% { transform: translateY(-${props => 15 + Math.random() * 25}px) translateX(${props => -8 + Math.random() * 16}px) scale(${props => 0.8 + Math.random() * 0.4}); }
-    35% { transform: translateY(-${props => 25 + Math.random() * 35}px) translateX(${props => -12 + Math.random() * 24}px) scale(${props => 0.6 + Math.random() * 0.8}); }
-    50% { transform: translateY(-${props => 30 + Math.random() * 40}px) translateX(${props => -15 + Math.random() * 30}px) scale(${props => 0.9 + Math.random() * 0.3}); }
-    65% { transform: translateY(-${props => 20 + Math.random() * 25}px) translateX(${props => -6 + Math.random() * 18}px) scale(${props => 1.1 + Math.random() * 0.2}); }
-    80% { transform: translateY(-${props => 8 + Math.random() * 15}px) translateX(${props => -3 + Math.random() * 12}px) scale(${props => 0.85 + Math.random() * 0.3}); }
-    100% { transform: translateY(0px) translateX(0px) scale(1); }
+  @keyframes swarmMovement {
+    0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+    12% { transform: translateY(-${props => 8 + Math.random() * 12}px) translateX(${props => Math.cos(props.$angle) * 15}px) rotate(${props => props.$angle * 0.3}deg); }
+    25% { transform: translateY(-${props => 12 + Math.random() * 18}px) translateX(${props => Math.cos(props.$angle + 1) * 25}px) rotate(${props => props.$angle * 0.5}deg); }
+    37% { transform: translateY(-${props => 16 + Math.random() * 22}px) translateX(${props => Math.cos(props.$angle + 2) * 30}px) rotate(${props => props.$angle * 0.7}deg); }
+    50% { transform: translateY(-${props => 20 + Math.random() * 25}px) translateX(${props => Math.cos(props.$angle + 3) * 35}px) rotate(${props => props.$angle}deg); }
+    62% { transform: translateY(-${props => 16 + Math.random() * 20}px) translateX(${props => Math.cos(props.$angle + 4) * 25}px) rotate(${props => props.$angle * 0.8}deg); }
+    75% { transform: translateY(-${props => 12 + Math.random() * 15}px) translateX(${props => Math.cos(props.$angle + 5) * 20}px) rotate(${props => props.$angle * 0.6}deg); }
+    87% { transform: translateY(-${props => 6 + Math.random() * 10}px) translateX(${props => Math.cos(props.$angle + 6) * 10}px) rotate(${props => props.$angle * 0.3}deg); }
+    100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
   }
 `;
 
@@ -232,22 +234,181 @@ const Footer = styled.footer`
   position: relative;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const ModalTitle = styled.h3`
+  color: #333;
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background: #f0f0f0;
+    color: #333;
+  }
+`;
+
+const SwarmList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+const SwarmItem = styled.div`
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+  }
+`;
+
+const SwarmName = styled.h4`
+  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const SwarmCategory = styled.p`
+  color: #666;
+  margin: 0 0 15px 0;
+  font-size: 0.9rem;
+`;
+
+const SwarmActions = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const JoinSwarmButton = styled.button`
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #45a049;
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const ViewSwarmButton = styled.button`
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 1px solid #667eea;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #667eea;
+    color: white;
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+`;
+
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+`;
+
+interface Swarm {
+  id: string;
+  name: string;
+  category: string;
+  invite_code: string;
+}
+
 export default function JoinSwarm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [swarms, setSwarms] = useState<Swarm[]>([]);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const generateSwarmDots = () => {
     const dots = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 35; i++) {
       dots.push(
         <SwarmDot
           key={i}
-          size={2 + Math.random() * 10}
-          left={Math.random() * 100}
-          delay={Math.random() * 4}
-          opacity={0.2 + Math.random() * 0.5}
-          speed={2.5 + Math.random() * 3.5}
+          $size={2 + Math.random() * 8}
+          $left={Math.random() * 100}
+          $delay={Math.random() * 5}
+          $opacity={0.3 + Math.random() * 0.6}
+          $speed={3 + Math.random() * 4}
+          $angle={Math.random() * 360}
         />
       );
     }
@@ -276,7 +437,14 @@ export default function JoinSwarm() {
       if (response.ok) {
         const result = await response.json();
         setSuccess(`Successfully joined "${result.swarm_name}" as ${result.nickname}!`);
-        (e.target as HTMLFormElement).reset();
+        
+        // Store nickname for live session
+        localStorage.setItem('swarm-nickname', result.nickname);
+        
+        // Redirect to live session after a short delay
+        setTimeout(() => {
+          window.location.href = `/live?swarmId=${result.swarm_id}&swarmName=${encodeURIComponent(result.swarm_name)}`;
+        }, 2000);
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to join swarm');
@@ -290,22 +458,16 @@ export default function JoinSwarm() {
   };
 
   const handleBrowseClick = async () => {
-    setIsLoading(true);
+    setShowModal(true);
+    setModalLoading(true);
     setError('');
     
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4444'}/api/swarms`);
       
       if (response.ok) {
-        const swarms = await response.json();
-        // For now, just show an alert with the swarms
-        // In a real app, you'd navigate to a browse page
-        if (swarms.length > 0) {
-          const swarmsList = swarms.map((s: any) => `${s.name} (${s.category})`).join('\n');
-          alert(`Public Swarms:\n${swarmsList}`);
-        } else {
-          alert('No public swarms found');
-        }
+        const swarmsData = await response.json();
+        setSwarms(swarmsData);
       } else {
         setError('Failed to fetch public swarms');
       }
@@ -313,8 +475,53 @@ export default function JoinSwarm() {
       setError('Network error. Please try again.');
       console.error('Error fetching swarms:', err);
     } finally {
-      setIsLoading(false);
+      setModalLoading(false);
     }
+  };
+
+  const handleJoinSwarm = async (swarm: Swarm) => {
+    const nickname = prompt(`Enter your nickname for "${swarm.name}":`);
+    if (!nickname) return;
+
+    setModalLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4444'}/api/swarms/${swarm.invite_code}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        localStorage.setItem('swarm-nickname', result.nickname);
+        setShowModal(false);
+        setSuccess(`Successfully joined "${result.swarm_name}" as ${result.nickname}!`);
+        
+        setTimeout(() => {
+          window.location.href = `/live?swarmId=${result.swarm_id}&swarmName=${encodeURIComponent(result.swarm_name)}`;
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to join swarm');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+      console.error('Error joining swarm:', err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleViewSwarm = (swarm: Swarm) => {
+    window.location.href = `/live?swarmId=${swarm.id}&swarmName=${encodeURIComponent(swarm.name)}`;
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSwarms([]);
+    setError('');
   };
 
   return (
@@ -322,7 +529,7 @@ export default function JoinSwarm() {
       <BackButton href="/">← Back</BackButton>
       
       <Header>
-        <Logo>Join Swarm</Logo>
+        <Logo>Join a Swarm</Logo>
       </Header>
       
       <Main>
@@ -366,7 +573,7 @@ export default function JoinSwarm() {
             <span>or</span>
           </OrDivider>
           
-          <BrowseButton type="button" onClick={handleBrowseClick} disabled={isLoading}>
+          <BrowseButton as={Link} href="/swarms?filter=public">
             Browse Public Swarms
           </BrowseButton>
         </Card>
@@ -379,6 +586,48 @@ export default function JoinSwarm() {
       <Footer>
         <p>WarmSwarm.org</p>
       </Footer>
+
+      {showModal && (
+        <ModalOverlay onClick={closeModal}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>🌐 Browse Public Swarms</ModalTitle>
+              <CloseButton onClick={closeModal}>×</CloseButton>
+            </ModalHeader>
+
+            {modalLoading ? (
+              <LoadingState>Loading swarms...</LoadingState>
+            ) : swarms.length === 0 ? (
+              <EmptyState>
+                <p>No public swarms found</p>
+                <p>Create a new swarm to get started!</p>
+              </EmptyState>
+            ) : (
+              <SwarmList>
+                {swarms.map((swarm) => (
+                  <SwarmItem key={swarm.id}>
+                    <SwarmName>{swarm.name}</SwarmName>
+                    <SwarmCategory>Category: {swarm.category}</SwarmCategory>
+                    <SwarmActions>
+                      <JoinSwarmButton 
+                        onClick={() => handleJoinSwarm(swarm)}
+                        disabled={modalLoading}
+                      >
+                        Join Swarm
+                      </JoinSwarmButton>
+                      <ViewSwarmButton 
+                        onClick={() => handleViewSwarm(swarm)}
+                      >
+                        View Details
+                      </ViewSwarmButton>
+                    </SwarmActions>
+                  </SwarmItem>
+                ))}
+              </SwarmList>
+            )}
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </Container>
   );
 }

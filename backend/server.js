@@ -2,9 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:3333",
+    methods: ["GET", "POST"]
+  }
+});
+
 const port = process.env.PORT || 4444;
 
 // Database connection
@@ -198,8 +208,106 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// WebRTC Signaling
+const swarmSessions = new Map(); // swarmId -> Set of socketIds
+const socketToSwarm = new Map(); // socketId -> swarmId
+const socketToUser = new Map(); // socketId -> { nickname, swarmId }
+
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  // Join swarm session
+  socket.on('join-swarm', ({ swarmId, nickname }) => {
+    console.log(`${nickname} joining swarm ${swarmId}`);
+    
+    socket.join(swarmId);
+    socketToSwarm.set(socket.id, swarmId);
+    socketToUser.set(socket.id, { nickname, swarmId });
+    
+    if (!swarmSessions.has(swarmId)) {
+      swarmSessions.set(swarmId, new Set());
+    }
+    swarmSessions.get(swarmId).add(socket.id);
+    
+    // Notify others in the swarm
+    socket.to(swarmId).emit('user-joined', { nickname, socketId: socket.id });
+    
+    // Send current participants to the new user
+    const participants = Array.from(swarmSessions.get(swarmId))
+      .filter(id => id !== socket.id)
+      .map(id => {
+        const user = socketToUser.get(id);
+        return { socketId: id, nickname: user?.nickname };
+      });
+    
+    socket.emit('swarm-participants', participants);
+  });
+
+  // WebRTC signaling events
+  socket.on('webrtc-offer', ({ targetSocketId, offer }) => {
+    const user = socketToUser.get(socket.id);
+    socket.to(targetSocketId).emit('webrtc-offer', { 
+      fromSocketId: socket.id, 
+      fromNickname: user?.nickname,
+      offer 
+    });
+  });
+
+  socket.on('webrtc-answer', ({ targetSocketId, answer }) => {
+    const user = socketToUser.get(socket.id);
+    socket.to(targetSocketId).emit('webrtc-answer', { 
+      fromSocketId: socket.id, 
+      fromNickname: user?.nickname,
+      answer 
+    });
+  });
+
+  socket.on('webrtc-ice-candidate', ({ targetSocketId, candidate }) => {
+    socket.to(targetSocketId).emit('webrtc-ice-candidate', { 
+      fromSocketId: socket.id, 
+      candidate 
+    });
+  });
+
+  // Real-time messaging
+  socket.on('swarm-message', ({ message }) => {
+    const user = socketToUser.get(socket.id);
+    if (user) {
+      socket.to(user.swarmId).emit('swarm-message', {
+        message,
+        nickname: user.nickname,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+    
+    const swarmId = socketToSwarm.get(socket.id);
+    const user = socketToUser.get(socket.id);
+    
+    if (swarmId && swarmSessions.has(swarmId)) {
+      swarmSessions.get(swarmId).delete(socket.id);
+      if (swarmSessions.get(swarmId).size === 0) {
+        swarmSessions.delete(swarmId);
+      }
+      
+      // Notify others in the swarm
+      socket.to(swarmId).emit('user-left', { 
+        nickname: user?.nickname, 
+        socketId: socket.id 
+      });
+    }
+    
+    socketToSwarm.delete(socket.id);
+    socketToUser.delete(socket.id);
+  });
+});
+
 // Start server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`WarmSwarm backend server running on port ${port}`);
 });
 

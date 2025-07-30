@@ -8,7 +8,7 @@ const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #d946ef 0%, #a855f7 50%, #8b5cf6 100%);
   padding: 20px;
   box-sizing: border-box;
   position: relative;
@@ -25,21 +25,24 @@ const SwarmGraphic = styled.div`
   z-index: 1;
 `;
 
-const SwarmDot = styled.div<{ size: number; left: number; delay: number; opacity: number }>`
+const SwarmDot = styled.div<{ size: number; left: number; delay: number; opacity: number; angle: number }>`
   position: absolute;
   width: ${props => props.size}px;
   height: ${props => props.size}px;
   background: rgba(255, 255, 255, ${props => props.opacity});
   border-radius: 50%;
   left: ${props => props.left}%;
-  bottom: ${props => Math.random() * 150}px;
-  animation: float ${props => 3 + Math.random() * 4}s ease-in-out infinite ${props => props.delay}s;
+  bottom: ${props => Math.random() * 140}px;
+  animation: swarmDance ${props => 3.5 + Math.random() * 3}s ease-in-out infinite ${props => props.delay}s;
   
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) translateX(0px); }
-    25% { transform: translateY(-${props => 10 + Math.random() * 20}px) translateX(${props => -5 + Math.random() * 10}px); }
-    50% { transform: translateY(-${props => 20 + Math.random() * 30}px) translateX(${props => -10 + Math.random() * 20}px); }
-    75% { transform: translateY(-${props => 10 + Math.random() * 15}px) translateX(${props => -2 + Math.random() * 8}px); }
+  @keyframes swarmDance {
+    0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+    16% { transform: translateY(-${props => 12 + Math.random() * 16}px) translateX(${props => Math.sin(props.angle) * 18}px) rotate(${props => props.angle * 0.2}deg); }
+    33% { transform: translateY(-${props => 18 + Math.random() * 24}px) translateX(${props => Math.sin(props.angle + 2) * 28}px) rotate(${props => props.angle * 0.4}deg); }
+    50% { transform: translateY(-${props => 24 + Math.random() * 30}px) translateX(${props => Math.sin(props.angle + 4) * 32}px) rotate(${props => props.angle * 0.6}deg); }
+    66% { transform: translateY(-${props => 18 + Math.random() * 20}px) translateX(${props => Math.sin(props.angle + 5) * 22}px) rotate(${props => props.angle * 0.4}deg); }
+    83% { transform: translateY(-${props => 8 + Math.random() * 12}px) translateX(${props => Math.sin(props.angle + 6) * 12}px) rotate(${props => props.angle * 0.2}deg); }
+    100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
   }
 `;
 
@@ -220,14 +223,15 @@ const Footer = styled.footer`
 export default function CreateSwarm() {
   const generateSwarmDots = () => {
     const dots = [];
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 30; i++) {
       dots.push(
         <SwarmDot
           key={i}
-          size={3 + Math.random() * 8}
+          size={2 + Math.random() * 9}
           left={Math.random() * 100}
-          delay={Math.random() * 3}
-          opacity={0.3 + Math.random() * 0.4}
+          delay={Math.random() * 4}
+          opacity={0.25 + Math.random() * 0.5}
+          angle={Math.random() * 360}
         />
       );
     }
@@ -282,7 +286,7 @@ export default function CreateSwarm() {
       <BackButton href="/">← Back</BackButton>
       
       <Header>
-        <Logo>Create Swarm</Logo>
+        <Logo>Start a Swarm</Logo>
       </Header>
       
       <Main>
