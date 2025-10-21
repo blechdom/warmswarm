@@ -6,8 +6,8 @@
 set -e
 
 # Configuration - UPDATE THESE VALUES
-DOMAIN_NAME=""  # e.g., warmswarm.com
-HOSTED_ZONE_ID=""  # Your Route 53 hosted zone ID
+DOMAIN_NAME="warmswarm.org"  # e.g., warmswarm.com
+HOSTED_ZONE_ID="Z03059661M7XJNX4GTN6R"  # Your Route 53 hosted zone ID
 
 if [ -z "$DOMAIN_NAME" ] || [ -z "$HOSTED_ZONE_ID" ]; then
     echo "❌ Please update DOMAIN_NAME and HOSTED_ZONE_ID in this script"
@@ -16,9 +16,9 @@ if [ -z "$DOMAIN_NAME" ] || [ -z "$HOSTED_ZONE_ID" ]; then
     exit 1
 fi
 
-# Get the ALB DNS name from CloudFormation
+# Get the ALB DNS name and hosted zone ID from CloudFormation
 ALB_DNS=$(aws cloudformation describe-stacks \
-    --stack-name warmswarm-infra \
+    --stack-name warmswarm-ssl \
     --query 'Stacks[0].Outputs[?OutputKey==`LoadBalancerDNS`].OutputValue' \
     --output text)
 
@@ -27,9 +27,12 @@ if [ -z "$ALB_DNS" ]; then
     exit 1
 fi
 
-echo "🌐 Creating Route 53 record for $DOMAIN_NAME pointing to $ALB_DNS"
+# Get the ALB hosted zone ID (this is fixed for each region)
+ALB_HOSTED_ZONE_ID="Z368ELLRRE2KJ0"  # us-west-1 ALB hosted zone ID
 
-# Create the Route 53 record
+echo "🌐 Creating Route 53 alias record for $DOMAIN_NAME pointing to $ALB_DNS"
+
+# Create the Route 53 alias record (required for apex domains)
 cat > /tmp/route53-record.json << EOF
 {
     "Changes": [
@@ -37,13 +40,12 @@ cat > /tmp/route53-record.json << EOF
             "Action": "UPSERT",
             "ResourceRecordSet": {
                 "Name": "$DOMAIN_NAME",
-                "Type": "CNAME",
-                "TTL": 300,
-                "ResourceRecords": [
-                    {
-                        "Value": "$ALB_DNS"
-                    }
-                ]
+                "Type": "A",
+                "AliasTarget": {
+                    "DNSName": "$ALB_DNS",
+                    "EvaluateTargetHealth": false,
+                    "HostedZoneId": "$ALB_HOSTED_ZONE_ID"
+                }
             }
         }
     ]

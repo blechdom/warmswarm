@@ -10,6 +10,19 @@ Parameters:
     Type: String
     Description: Your Route 53 domain name (e.g., example.com)
     Default: ""
+  
+  HostedZoneId:
+    Type: String
+    Description: Route 53 Hosted Zone ID for your domain
+    Default: ""
+  
+  SSLCertificateArn:
+    Type: String
+    Description: Existing SSL Certificate ARN (optional)
+    Default: ""
+
+Conditions:
+  CreateNewCertificate: !Equals [!Ref SSLCertificateArn, ""]
 
 Resources:
   # VPC and Networking
@@ -192,6 +205,24 @@ Resources:
         - Key: Name
           Value: !Sub ${ProjectName}-database
 
+  # SSL Certificate (conditional - use existing if provided)
+  SSLCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: CreateNewCertificate
+    Properties:
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames:
+        - !Sub "*.${DomainName}"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+        - DomainName: !Sub "*.${DomainName}"
+          HostedZoneId: !Ref HostedZoneId
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-ssl-cert
+
   # Secrets Manager for DB Password
   DBPasswordSecret:
     Type: AWS::SecretsManager::Secret
@@ -356,18 +387,35 @@ Resources:
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 5
 
-  # ALB Listener
-  ALBListener:
+  # HTTPS Listener (Primary)
+  HTTPSListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref FrontendTargetGroup
       LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !If [CreateNewCertificate, !Ref SSLCertificate, !Ref SSLCertificateArn]
+      SslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+
+  # HTTP Listener (Redirect to HTTPS)
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: 443
+            StatusCode: HTTP_301
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
       Port: 80
       Protocol: HTTP
 
-  # Listener Rules
+  # Listener Rules (HTTPS)
   BackendListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
@@ -378,8 +426,22 @@ Resources:
         - Field: path-pattern
           Values:
             - /api/*
-      ListenerArn: !Ref ALBListener
+      ListenerArn: !Ref HTTPSListener
       Priority: 100
+
+  # Socket.IO WebSocket connections
+  SocketIOListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /socket.io/*
+      ListenerArn: !Ref HTTPSListener
+      Priority: 101
 
   # ECS Services
   BackendService:
@@ -406,7 +468,7 @@ Resources:
 
   FrontendService:
     Type: AWS::ECS::Service
-    DependsOn: ALBListener
+    DependsOn: HTTPSListener
     Properties:
       ServiceName: !Sub ${ProjectName}-frontend
       Cluster: !Ref ECSCluster

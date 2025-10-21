@@ -68,9 +68,9 @@
   padding: 0 20px;
   border: 1px solid transparent;
   transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   cursor: pointer;
   display: flex;
   align-items: center;

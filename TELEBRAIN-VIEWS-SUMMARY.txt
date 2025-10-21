@@ -1,0 +1,54 @@
+TELEBRAIN PAGE VIEWS - QUICK REFERENCE
+=====================================
+
+MAIN VIEWS:
+-----------
+Home                 #                           Landing page (PERFORM/PROGRAM)
+Login                #login                      User authentication
+About                #about                      Contact info
+Instructions         #instructions               How-to guide
+Tutorial             #tutorial                   User tutorial
+
+PERFORMANCE:
+-----------
+Performance Setup    #performance2               Main entry point
+Live Performance     #performance2/:parent/:id   Active performance session
+Legacy Performance   #performance                Old interface
+
+CONTENT CREATION (via #create/:parent/:id):
+------------------------------------------
+Audio URLs           parent_id: 21               Link to audio files
+Audio Uploads        parent_id: 22               Upload audio files
+Text-to-Speech       parent_id: 23               Generate TTS audio
+Image URLs           parent_id: 17, 18           Link to images
+Teleprompts          parent_id: 19               Text prompts
+
+COLLECTIONS (via #structure/:parent/:id):
+----------------------------------------
+Audio-Image Pairs    parent_id: 56               Paired content
+Image Phrases        parent_id: 57               Image sequences
+Audio Sentences      parent_id: 58               Audio sequences
+Content Collections  parent_id: 59               Grouped content
+
+PROGRAMS (via #program/:parent/:id):
+-----------------------------------
+Programs             parent_id: 15               Performance programs
+Interfaces           parent_id: 13               Custom layouts
+Multi-roles          parent_id: 50               Role coordination
+Fragments            parent_id: 51               Reusable components
+
+TIMING (via #perform/:parent/:id):
+---------------------------------
+Timers               parent_id: 35               Countdown timers
+Metronomes           parent_id: 36               Beat timers
+Timed Organization   parent_id: 37               Complex timing
+Scheduler            #scheduler                  Schedule manager
+
+OTHER:
+------
+My Brains            #brains/:id                 User projects
+Roles                #perform/12/:id             Role management
+OSC Tester           #testosc                    Open Sound Control test
+Database             #database                   DB viewer/admin
+
+TOTAL VIEWS: 45+

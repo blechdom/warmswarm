@@ -7,7 +7,7 @@ import { useWebRTC } from '@/hooks/useWebRTC';
 
 const Container = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #d63384 0%, #d946ef 50%, #dc2626 100%);
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -50,7 +50,7 @@ const StatusDot = styled.div<{ connected: boolean }>`
   height: 8px;
   border-radius: 50%;
   background: ${props => props.connected ? '#2ecc71' : '#e74c3c'};
-  animation: ${props => props.connected ? 'pulse 2s infinite' : 'none'};
+  animation: ${props => props.connected ? 'pulse 1.5s infinite' : 'none'};
   
   @keyframes pulse {
     0% { opacity: 1; }
@@ -193,7 +193,7 @@ const SendButton = styled.button`
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   
   &:hover {
     background: #5a6fd8;

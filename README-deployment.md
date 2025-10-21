@@ -8,42 +8,54 @@
 
 ## Deployment Steps
 
-### 1. Deploy Infrastructure and Images
+### 1. Find Your Hosted Zone ID
+
+First, find your Route 53 hosted zone ID:
+```bash
+aws route53 list-hosted-zones --query 'HostedZones[?Name==`warmswarm.org.`].Id' --output text
+```
+
+### 2. Update Configuration Files
+
+Edit `route53-setup.sh` and update:
+- `DOMAIN_NAME="warmswarm.org"`
+- `HOSTED_ZONE_ID="YOUR_ZONE_ID_HERE"`
+
+Make scripts executable:
+```bash
+chmod +x deploy.sh route53-setup.sh
+```
+
+### 3. Deploy Infrastructure (HTTP-only version)
+
+**Note**: Due to SSL certificate validation issues, deploy the HTTP-only version first:
 
 ```bash
-# Make scripts executable
-chmod +x deploy.sh route53-setup.sh
+# Deploy AWS infrastructure without SSL
+aws cloudformation deploy \
+    --template-file infrastructure-no-ssl.yml \
+    --stack-name warmswarm-infra-no-ssl \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides DomainName=warmswarm.org HostedZoneId=YOUR_ZONE_ID_HERE
+```
 
+### 4. Build and Push Docker Images
+
+```bash
 # Deploy ECR repositories and push Docker images
 ./deploy.sh
-
-# Deploy AWS infrastructure (VPC, ECS, RDS, ALB)
-aws cloudformation deploy \
-    --template-file infrastructure.yml \
-    --stack-name warmswarm-infra \
-    --capabilities CAPABILITY_IAM \
-    --parameter-overrides DomainName=yourdomain.com
 ```
 
-### 2. Configure Route 53
+### 5. Configure DNS
 
-1. Find your hosted zone ID:
-```bash
-aws route53 list-hosted-zones --query 'HostedZones[?Name==`yourdomain.com.`].Id' --output text
-```
-
-2. Edit `route53-setup.sh` and update:
-   - `DOMAIN_NAME="yourdomain.com"`
-   - `HOSTED_ZONE_ID="Z1234567890123"`
-
-3. Run the Route 53 setup:
+Run the Route 53 setup to create the DNS record:
 ```bash
 ./route53-setup.sh
 ```
 
-### 3. Verify Deployment
+### 6. Verify Deployment
 
-Your application should be available at `http://yourdomain.com` within a few minutes.
+Your application should be available at `http://warmswarm.org` within a few minutes after DNS propagation.
 
 ## Architecture Overview
 
@@ -74,6 +86,18 @@ aws ecs update-service --cluster warmswarm-cluster --service warmswarm-frontend 
 aws ecs update-service --cluster warmswarm-cluster --service warmswarm-backend --force-new-deployment
 ```
 
+## SSL Setup (Optional)
+
+Once the HTTP version is working, you can add SSL by deploying the full infrastructure:
+
+```bash
+aws cloudformation deploy \
+    --template-file infrastructure.yml \
+    --stack-name warmswarm-infra \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides DomainName=warmswarm.org HostedZoneId=YOUR_ZONE_ID_HERE
+```
+
 ## Cost Optimization
 
 - RDS instance: `db.t3.micro` (free tier eligible)
@@ -85,3 +109,11 @@ aws ecs update-service --cluster warmswarm-cluster --service warmswarm-backend -
 1. **Services not starting**: Check CloudWatch logs
 2. **Database connection issues**: Verify security groups and RDS endpoint
 3. **Load balancer 503 errors**: Check target group health in EC2 console
+4. **SSL certificate issues**: Ensure domain nameservers point to Route 53
+
+## Cleanup
+
+To delete all resources:
+```bash
+aws cloudformation delete-stack --stack-name warmswarm-infra-no-ssl
+```

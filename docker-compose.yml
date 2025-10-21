@@ -4,7 +4,7 @@ services:
   frontend:
     build: .
     ports:
-      - "3333:3333"
+      - "3333:3444"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:4444

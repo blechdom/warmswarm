@@ -1,86 +1,43 @@
 'use client';
 
-import Link from 'next/link';
-import { useState } from 'react';
 import styled from 'styled-components';
+import MainMenu from '@/components/MainMenu';
 
 const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #d946ef 0%, #a855f7 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  font-family: 'Quantico', Arial, Helvetica, sans-serif;
   padding: 20px;
   box-sizing: border-box;
-  position: relative;
-  overflow: hidden;
-`;
-
-const SwarmGraphic = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 200px;
-  pointer-events: none;
-  z-index: 1;
-`;
-
-const SwarmDot = styled.div<{ size: number; left: number; delay: number; opacity: number; angle: number }>`
-  position: absolute;
-  width: ${props => props.size}px;
-  height: ${props => props.size}px;
-  background: rgba(255, 255, 255, ${props => props.opacity});
-  border-radius: 50%;
-  left: ${props => props.left}%;
-  bottom: ${props => Math.random() * 140}px;
-  animation: swarmDance ${props => 3.5 + Math.random() * 3}s ease-in-out infinite ${props => props.delay}s;
-  
-  @keyframes swarmDance {
-    0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-    16% { transform: translateY(-${props => 12 + Math.random() * 16}px) translateX(${props => Math.sin(props.angle) * 18}px) rotate(${props => props.angle * 0.2}deg); }
-    33% { transform: translateY(-${props => 18 + Math.random() * 24}px) translateX(${props => Math.sin(props.angle + 2) * 28}px) rotate(${props => props.angle * 0.4}deg); }
-    50% { transform: translateY(-${props => 24 + Math.random() * 30}px) translateX(${props => Math.sin(props.angle + 4) * 32}px) rotate(${props => props.angle * 0.6}deg); }
-    66% { transform: translateY(-${props => 18 + Math.random() * 20}px) translateX(${props => Math.sin(props.angle + 5) * 22}px) rotate(${props => props.angle * 0.4}deg); }
-    83% { transform: translateY(-${props => 8 + Math.random() * 12}px) translateX(${props => Math.sin(props.angle + 6) * 12}px) rotate(${props => props.angle * 0.2}deg); }
-    100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-  }
-`;
-
-const BackButton = styled(Link)`
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 25px;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  z-index: 10;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
 `;
 
 const Header = styled.header`
   text-align: center;
-  margin-bottom: 40px;
-  padding-top: 60px;
-  z-index: 5;
-  position: relative;
+  padding: 60px 20px 40px;
 `;
 
 const Logo = styled.h1`
-  font-size: 2.5rem;
+  font-size: 3rem;
   color: white;
-  margin: 0;
+  margin: 0 0 20px 0;
   font-weight: 700;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
   
-  @media (max-width: 480px) {
-    font-size: 2rem;
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
+`;
+
+const Tagline = styled.p`
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-weight: 300;
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
   }
 `;
 
@@ -89,273 +46,112 @@ const Main = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 350px;
+  padding: 20px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  z-index: 5;
-  position: relative;
 `;
 
-const Card = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 30px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-`;
-
-const Title = styled.h2`
-  color: #333;
-  margin: 0 0 25px 0;
-  font-size: 1.4rem;
-  font-weight: 600;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
+const WorkflowGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
-  text-align: left;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const Label = styled.label`
-  color: #333;
-  font-weight: 500;
-  font-size: 0.9rem;
-`;
-
-const Input = styled.input`
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
+  width: 100%;
+  max-width: 1200px;
   
-  &:focus {
-    outline: none;
-    border-color: #667eea;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    max-width: 400px;
   }
 `;
 
-const TextArea = styled.textarea`
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 1rem;
-  min-height: 80px;
-  resize: vertical;
-  font-family: inherit;
-  transition: border-color 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-`;
-
-const Select = styled.select`
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 1rem;
-  background: white;
-  transition: border-color 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-`;
-
-const SubmitButton = styled.button`
-  background: #ff6b6b;
-  color: white;
-  padding: 15px;
-  border: none;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: 600;
+const WorkflowCard = styled.a`
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 30px 25px;
+  text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 10px;
+  text-decoration: none;
   
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  &:hover:not(:disabled) {
-    background: #ff5252;
-    transform: translateY(-1px);
-  }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0);
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   }
 `;
 
-const Message = styled.div<{ type: 'error' | 'success' }>`
-  padding: 12px;
-  border-radius: 8px;
+const CardNumber = styled.div`
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+  margin-bottom: 10px;
+`;
+
+const CardIcon = styled.div`
+  font-size: 3rem;
   margin-bottom: 15px;
-  font-size: 0.9rem;
-  background: ${props => props.type === 'error' ? '#ffebee' : '#e8f5e8'};
-  color: ${props => props.type === 'error' ? '#c62828' : '#2e7d32'};
-  border: 1px solid ${props => props.type === 'error' ? '#ffcdd2' : '#c8e6c9'};
 `;
 
-const Footer = styled.footer`
-  text-align: center;
-  margin-top: 40px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-  z-index: 5;
-  position: relative;
+const CardTitle = styled.h3`
+  font-size: 1.4rem;
+  color: white;
+  margin: 0 0 10px 0;
+  font-weight: 700;
 `;
 
-export default function CreateSwarm() {
-  const generateSwarmDots = () => {
-    const dots = [];
-    for (let i = 0; i < 30; i++) {
-      dots.push(
-        <SwarmDot
-          key={i}
-          size={2 + Math.random() * 9}
-          left={Math.random() * 100}
-          delay={Math.random() * 4}
-          opacity={0.25 + Math.random() * 0.5}
-          angle={Math.random() * 360}
-        />
-      );
-    }
-    return dots;
-  };
+const CardDescription = styled.p`
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  line-height: 1.4;
+`;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-    
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      name: formData.get('swarmName') as string,
-      description: formData.get('description') as string,
-      privacy: formData.get('privacy') as string,
-      category: formData.get('category') as string,
-    };
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/swarms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setSuccess(`Swarm created successfully! Invite code: ${result.invite_code}`);
-        (e.target as HTMLFormElement).reset();
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to create swarm');
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('Error creating swarm:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+export default function Create() {
   return (
     <Container>
-      <BackButton href="/">← Back</BackButton>
+      <MainMenu />
       
       <Header>
-        <Logo>Start a Swarm</Logo>
+        <Logo>⚙️ Create</Logo>
+        <Tagline>Build your swarm performance</Tagline>
       </Header>
       
       <Main>
-        <Card>
-          <Title>🐝 Create New Swarm</Title>
+        <WorkflowGrid>
+          <WorkflowCard href="/create/collect">
+            <CardIcon>📦</CardIcon>
+            <CardTitle>Collect</CardTitle>
+            <CardDescription>Gather audio, images, and video content</CardDescription>
+          </WorkflowCard>
           
-          {error && <Message type="error">{error}</Message>}
-          {success && <Message type="success">{success}</Message>}
+          <WorkflowCard href="/create/cast">
+            <CardIcon>🎭</CardIcon>
+            <CardTitle>Cast</CardTitle>
+            <CardDescription>Define roles and qualities for participants</CardDescription>
+          </WorkflowCard>
           
-          <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label htmlFor="swarmName">Swarm Name</Label>
-              <Input 
-                id="swarmName"
-                name="swarmName"
-                type="text" 
-                placeholder="Enter your swarm name"
-                required
-                disabled={isLoading}
-              />
-            </FormGroup>
-            
-            <FormGroup>
-              <Label htmlFor="description">Description</Label>
-              <TextArea 
-                id="description"
-                name="description"
-                placeholder="What's your swarm about?"
-                required
-                disabled={isLoading}
-              />
-            </FormGroup>
-            
-            <FormGroup>
-              <Label htmlFor="privacy">Privacy Setting</Label>
-              <Select id="privacy" name="privacy" required disabled={isLoading}>
-                <option value="">Select privacy level</option>
-                <option value="public">Public - Anyone can join</option>
-                <option value="private">Private - Invite only</option>
-                <option value="hidden">Hidden - Not searchable</option>
-              </Select>
-            </FormGroup>
-            
-            <FormGroup>
-              <Label htmlFor="category">Category</Label>
-              <Select id="category" name="category" required disabled={isLoading}>
-                <option value="">Select category</option>
-                <option value="event">Event</option>
-                <option value="project">Project</option>
-                <option value="social">Social</option>
-                <option value="work">Work</option>
-                <option value="other">Other</option>
-              </Select>
-            </FormGroup>
-            
-            <SubmitButton type="submit" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Swarm'}
-            </SubmitButton>
-          </Form>
-        </Card>
+          <WorkflowCard href="/create/coordinate">
+            <CardIcon>🎯</CardIcon>
+            <CardTitle>Coordinate</CardTitle>
+            <CardDescription>Arrange sequences, layers, and swarms</CardDescription>
+          </WorkflowCard>
+          
+          <WorkflowCard href="/create/catalogue">
+            <CardIcon>📚</CardIcon>
+            <CardTitle>Catalogue</CardTitle>
+            <CardDescription>Browse and manage all components</CardDescription>
+          </WorkflowCard>
+          
+          <WorkflowCard href="/create/connect">
+            <CardIcon>🔗</CardIcon>
+            <CardTitle>Connect</CardTitle>
+            <CardDescription>Plan, invite, and go live</CardDescription>
+          </WorkflowCard>
+        </WorkflowGrid>
       </Main>
-      
-      <SwarmGraphic>
-        {generateSwarmDots()}
-      </SwarmGraphic>
-      
-      <Footer>
-        <p>WarmSwarm.org</p>
-      </Footer>
     </Container>
   );
 }

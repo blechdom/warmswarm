@@ -38,11 +38,42 @@ function generateInviteCode() {
 
 // API Routes
 
-// Get all public swarms
+// Get all public swarms (or filtered swarms)
 app.get('/api/swarms', async (req, res) => {
   try {
+    const { filter, swarmIds } = req.query;
+    
+    // Handle "my" swarms filter - requires swarmIds from client
+    if (filter === 'my') {
+      if (!swarmIds) {
+        return res.json([]);
+      }
+      
+      // Parse comma-separated swarm IDs
+      const ids = swarmIds.split(',').filter(id => id.trim());
+      if (ids.length === 0) {
+        return res.json([]);
+      }
+      
+      const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+      const result = await pool.query(
+        `SELECT s.id, s.name, s.description, s.category, s.privacy, s.invite_code, s.created_at,
+         (SELECT COUNT(*) FROM swarm_members WHERE swarm_id = s.id) as member_count
+         FROM swarms s 
+         WHERE s.id IN (${placeholders})
+         ORDER BY s.created_at DESC`,
+        ids
+      );
+      return res.json(result.rows);
+    }
+    
+    // Default: return all public swarms
     const result = await pool.query(
-      'SELECT id, name, description, category, invite_code, created_at FROM swarms WHERE privacy = $1 ORDER BY created_at DESC',
+      `SELECT s.id, s.name, s.description, s.category, s.privacy, s.invite_code, s.created_at,
+       (SELECT COUNT(*) FROM swarm_members WHERE swarm_id = s.id) as member_count
+       FROM swarms s 
+       WHERE s.privacy = $1 
+       ORDER BY s.created_at DESC`,
       ['public']
     );
     res.json(result.rows);
@@ -217,12 +248,23 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   // Join swarm session
-  socket.on('join-swarm', ({ swarmId, nickname }) => {
-    console.log(`${nickname} joining swarm ${swarmId}`);
+  socket.on('join-swarm', ({ swarmId, nickname, role = 'all' }) => {
+    console.log(`${nickname} joining swarm ${swarmId} with role ${role}`);
     
+    // Join main swarm room
     socket.join(swarmId);
+    
+    // Join role-based room
+    const roleRoom = `${swarmId}:${role}`;
+    socket.join(roleRoom);
+    
+    // Also join "all" room if not already in it
+    if (role !== 'all') {
+      socket.join(`${swarmId}:all`);
+    }
+    
     socketToSwarm.set(socket.id, swarmId);
-    socketToUser.set(socket.id, { nickname, swarmId });
+    socketToUser.set(socket.id, { nickname, swarmId, role });
     
     if (!swarmSessions.has(swarmId)) {
       swarmSessions.set(swarmId, new Set());
@@ -230,17 +272,76 @@ io.on('connection', (socket) => {
     swarmSessions.get(swarmId).add(socket.id);
     
     // Notify others in the swarm
-    socket.to(swarmId).emit('user-joined', { nickname, socketId: socket.id });
+    socket.to(swarmId).emit('user-joined', { nickname, socketId: socket.id, role });
     
     // Send current participants to the new user
     const participants = Array.from(swarmSessions.get(swarmId))
       .filter(id => id !== socket.id)
       .map(id => {
         const user = socketToUser.get(id);
-        return { socketId: id, nickname: user?.nickname };
+        return { socketId: id, nickname: user?.nickname, role: user?.role };
       });
     
     socket.emit('swarm-participants', participants);
+  });
+
+  // Change role
+  socket.on('change-role', ({ swarmId, role }) => {
+    const user = socketToUser.get(socket.id);
+    if (user) {
+      // Leave old role room
+      const oldRoleRoom = `${swarmId}:${user.role}`;
+      socket.leave(oldRoleRoom);
+      
+      // Join new role room
+      const newRoleRoom = `${swarmId}:${role}`;
+      socket.join(newRoleRoom);
+      
+      // Also join "all" room if not already in it
+      if (role !== 'all') {
+        socket.join(`${swarmId}:all`);
+      }
+      
+      // Update user info
+      user.role = role;
+      socketToUser.set(socket.id, user);
+      
+      console.log(`${user.nickname} changed role to ${role} in swarm ${swarmId}`);
+    }
+  });
+
+  // Broadcast live message (from sender) to specific receivers
+  socket.on('broadcast-live-message', ({ swarmId, target, message, contentType = 'text' }) => {
+    const user = socketToUser.get(socket.id);
+    if (user && swarmId && user.role === 'sender') {
+      let targetRooms = [];
+      
+      // Determine target rooms based on selection
+      if (target === 'all') {
+        targetRooms = ['receiver-1', 'receiver-2', 'receiver-3', 'receiver-4'];
+      } else if (target === 'even') {
+        targetRooms = ['receiver-2', 'receiver-4'];
+      } else if (target === 'odd') {
+        targetRooms = ['receiver-1', 'receiver-3'];
+      } else if (['1', '2', '3', '4'].includes(target)) {
+        targetRooms = [`receiver-${target}`];
+      }
+      
+      // Broadcast to each target room
+      targetRooms.forEach(receiverRole => {
+        const targetRoom = `${swarmId}:${receiverRole}`;
+        io.to(targetRoom).emit('live-message', {
+          nickname: user.nickname,
+          message: message,
+          timestamp: new Date().toISOString(),
+          socketId: socket.id,
+          role: receiverRole,
+          contentType: contentType
+        });
+      });
+      
+      console.log(`Sender ${user.nickname} broadcasting to ${target}: ${message}`);
+    }
   });
 
   // WebRTC signaling events
@@ -281,6 +382,32 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Time synchronization for precise audio playback
+  socket.on('time-sync-request', (clientTime) => {
+    const serverTime = Date.now();
+    socket.emit('time-sync-response', {
+      clientTime,
+      serverTime
+    });
+  });
+
+  // Synchronized audio broadcasting
+  socket.on('send-synced-audio', ({ swarmId, audioData, playAtTime, duration, messageId }) => {
+    const user = socketToUser.get(socket.id);
+    if (user && user.swarmId === swarmId) {
+      console.log(`[SyncedAudio] Broadcasting audio ${messageId} to swarm ${swarmId}, play at ${playAtTime}`);
+      
+      // Broadcast to all other members in the swarm
+      socket.to(swarmId).emit('synced-audio', {
+        audioData,
+        playAtTime,
+        duration,
+        messageId,
+        senderNickname: user.nickname
+      });
+    }
+  });
+
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
@@ -303,6 +430,20 @@ io.on('connection', (socket) => {
     
     socketToSwarm.delete(socket.id);
     socketToUser.delete(socket.id);
+  });
+  
+  // Handle chat messages
+  socket.on('chat-message', ({ swarmId, message }) => {
+    const user = socketToUser.get(socket.id);
+    if (user && swarmId) {
+      // Broadcast message to all users in the swarm
+      io.to(swarmId).emit('chat-message', {
+        nickname: user.nickname,
+        message: message,
+        timestamp: new Date().toISOString(),
+        socketId: socket.id
+      });
+    }
   });
 });
 

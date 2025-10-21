@@ -8,45 +8,13 @@ const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #d946ef 0%, #a855f7 50%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #d63384 0%, #d946ef 50%, #dc2626 100%);
   padding: 20px;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
 `;
 
-const SwarmGraphic = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 200px;
-  pointer-events: none;
-  z-index: 1;
-`;
-
-const SwarmDot = styled.div<{ $size: number; $left: number; $delay: number; $opacity: number; $speed: number; $angle: number }>`
-  position: absolute;
-  width: ${props => props.$size}px;
-  height: ${props => props.$size}px;
-  background: rgba(255, 255, 255, ${props => props.$opacity});
-  border-radius: 50%;
-  left: ${props => props.$left}%;
-  bottom: ${props => Math.random() * 160}px;
-  animation: swarmMovement ${props => props.$speed}s ease-in-out infinite ${props => props.$delay}s;
-  
-  @keyframes swarmMovement {
-    0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-    12% { transform: translateY(-${props => 8 + Math.random() * 12}px) translateX(${props => Math.cos(props.$angle) * 15}px) rotate(${props => props.$angle * 0.3}deg); }
-    25% { transform: translateY(-${props => 12 + Math.random() * 18}px) translateX(${props => Math.cos(props.$angle + 1) * 25}px) rotate(${props => props.$angle * 0.5}deg); }
-    37% { transform: translateY(-${props => 16 + Math.random() * 22}px) translateX(${props => Math.cos(props.$angle + 2) * 30}px) rotate(${props => props.$angle * 0.7}deg); }
-    50% { transform: translateY(-${props => 20 + Math.random() * 25}px) translateX(${props => Math.cos(props.$angle + 3) * 35}px) rotate(${props => props.$angle}deg); }
-    62% { transform: translateY(-${props => 16 + Math.random() * 20}px) translateX(${props => Math.cos(props.$angle + 4) * 25}px) rotate(${props => props.$angle * 0.8}deg); }
-    75% { transform: translateY(-${props => 12 + Math.random() * 15}px) translateX(${props => Math.cos(props.$angle + 5) * 20}px) rotate(${props => props.$angle * 0.6}deg); }
-    87% { transform: translateY(-${props => 6 + Math.random() * 10}px) translateX(${props => Math.cos(props.$angle + 6) * 10}px) rotate(${props => props.$angle * 0.3}deg); }
-    100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-  }
-`;
 
 const BackButton = styled(Link)`
   position: absolute;
@@ -58,7 +26,7 @@ const BackButton = styled(Link)`
   border-radius: 25px;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   z-index: 10;
   
   &:hover {
@@ -137,7 +105,7 @@ const Input = styled.input`
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.225s ease;
   
   &:focus {
     outline: none;
@@ -154,7 +122,7 @@ const SubmitButton = styled.button`
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   margin-top: 10px;
   
   &:disabled {
@@ -202,7 +170,7 @@ const BrowseButton = styled.button`
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   
   &:disabled {
     opacity: 0.5;
@@ -304,7 +272,7 @@ const SwarmItem = styled.div`
   border: 2px solid #e0e0e0;
   border-radius: 15px;
   padding: 20px;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   
   &:hover {
     border-color: #667eea;
@@ -339,7 +307,7 @@ const JoinSwarmButton = styled.button`
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   
   &:hover {
     background: #45a049;
@@ -362,7 +330,7 @@ const ViewSwarmButton = styled.button`
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.225s ease;
   
   &:hover {
     background: #667eea;
@@ -397,23 +365,6 @@ export default function JoinSwarm() {
   const [swarms, setSwarms] = useState<Swarm[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
 
-  const generateSwarmDots = () => {
-    const dots = [];
-    for (let i = 0; i < 35; i++) {
-      dots.push(
-        <SwarmDot
-          key={i}
-          $size={2 + Math.random() * 8}
-          $left={Math.random() * 100}
-          $delay={Math.random() * 5}
-          $opacity={0.3 + Math.random() * 0.6}
-          $speed={3 + Math.random() * 4}
-          $angle={Math.random() * 360}
-        />
-      );
-    }
-    return dots;
-  };
 
   const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -444,7 +395,7 @@ export default function JoinSwarm() {
         // Redirect to live session after a short delay
         setTimeout(() => {
           window.location.href = `/live?swarmId=${result.swarm_id}&swarmName=${encodeURIComponent(result.swarm_name)}`;
-        }, 2000);
+        }, 1500);
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to join swarm');
@@ -501,7 +452,7 @@ export default function JoinSwarm() {
         
         setTimeout(() => {
           window.location.href = `/live?swarmId=${result.swarm_id}&swarmName=${encodeURIComponent(result.swarm_name)}`;
-        }, 2000);
+        }, 1500);
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to join swarm');
@@ -578,10 +529,6 @@ export default function JoinSwarm() {
           </BrowseButton>
         </Card>
       </Main>
-      
-      <SwarmGraphic>
-        {generateSwarmDots()}
-      </SwarmGraphic>
       
       <Footer>
         <p>WarmSwarm.org</p>

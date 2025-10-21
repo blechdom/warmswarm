@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database backups (ignore timestamped, keep latest)
+backend/backups/warmswarm_*_*.sql
+!backend/backups/warmswarm_latest.sql
+
+# media files (copied from telebrain, ~18MB total)
+# run backend/scripts/copy_telebrain_media.sh to restore
+public/snd/
+public/pics/
