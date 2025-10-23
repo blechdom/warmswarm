@@ -2,11 +2,11 @@
 
 ## 🎯 Key Insight
 
-**Creators should NOT see the 5 C's complexity!**
+**Organizers should NOT see the 5 C's complexity!**
 
-The full workflow (Collect, Cast, Coordinate, Constellation, Catalogue, Connect) is for **Programmers** who build templates and advanced configurations.
+The full workflow (Collect, Cast, Coordinate, Constellation, Catalogue, Connect) is for **Advanced** users who build templates and custom configurations.
 
-**Creators** get a simple flow:
+**Organizers** get a simple flow:
 1. Choose template
 2. Customize (names, numbers, content)
 3. Save & launch
@@ -39,12 +39,12 @@ The full workflow (Collect, Cast, Coordinate, Constellation, Catalogue, Connect)
 
 ---
 
-### 2. **Creators** 🎨
-**Goal:** Quickly create and launch swarms from templates with simple customization
+### 2. **Organizers** 🎨
+**Goal:** Quickly organize and launch swarms from templates with simple customization
 
 **Current Entry Points:**
 - Home `/` → "create" card
-- `/create` - Currently shows 5 C's (too complex, should be for Programmers)
+- `/create` - Currently shows 5 C's (too complex, should be for Advanced)
 
 **Ideal Journey (NEW SIMPLIFIED FLOW):**
 1. **New Swarm** → Click "Create Swarm"
@@ -65,14 +65,14 @@ The full workflow (Collect, Cast, Coordinate, Constellation, Catalogue, Connect)
 - Easy save and recall
 - Share/invite system
 
-**NOT included for Creators:**
-- Complex coordination (that's for Programmers)
-- Constellation patterns (that's for Programmers)
-- Deep customization (that's for Programmers)
+**NOT included for Organizers:**
+- Complex coordination (that's for Advanced)
+- Constellation patterns (that's for Advanced)
+- Deep customization (that's for Advanced)
 
 ---
 
-### 3. **Programmers** 🔧
+### 3. **Advanced** 🔧
 **Goal:** Build custom swarm configurations, constellation patterns, and complex coordination
 
 **Current Entry Points:**
@@ -90,7 +90,7 @@ The full workflow (Collect, Cast, Coordinate, Constellation, Catalogue, Connect)
 6. **Catalogue** → Browse and manage all components
 7. **Connect** → Advanced deployment options
 8. **Test** → Simulate and preview
-9. **Save as Template** → Share for Creators to use
+9. **Save as Template** → Share for Organizers to use
 
 **Key Needs:**
 - Full control over all settings
@@ -153,13 +153,13 @@ The full workflow (Collect, Cast, Coordinate, Constellation, Catalogue, Connect)
 └───────────────────────────────────┘
 
 ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│ 🎭 Participant │  │ 🎨 Creator    │  │ 🔧 Programmer │
+│ 🎭 Participant │  │ 🎨 Organizer  │  │ 🔧 Advanced   │
 │               │  │               │  │               │
 │ I want to     │  │ I want to     │  │ I want to     │
-│ join a swarm  │  │ build a swarm │  │ configure     │
-│               │  │               │  │ advanced      │
-│ [Browse]      │  │ [Create]      │  │ patterns      │
-│ [Join Code]   │  │ [Template]    │  │ [Advanced]    │
+│ join a swarm  │  │ organize a    │  │ build custom  │
+│               │  │ swarm         │  │ configs       │
+│ [Browse]      │  │ [Templates]   │  │ [Advanced]    │
+│ [Join Code]   │  │ [My Swarms]   │  │ [Full Tools]  │
 └───────────────┘  └───────────────┘  └───────────────┘
 ```
 
@@ -315,41 +315,62 @@ Link to: [My Swarms] (to edit existing)
 
 ### Step 2: Choose Template
 ```
-Short list of pre-configured swarms:
+Templates divided into LIVE and TIMED:
 
+LIVE TEMPLATES (Real-time control):
 ┌─────────────────┐  ┌─────────────────┐
-│ 🎵 Group Dance  │  │ 🎤 Sing Along   │
-│ Synchronized    │  │ Call & response │
+│ 🎤 Sing Along   │  │ 🎭 Theater Game │
+│ Call & response │  │ Improv & play   │
+│ (You control)   │  │ (You control)   │
 └─────────────────┘  └─────────────────┘
 
+┌─────────────────┐
+│ 🎨 Art Together │
+│ Follow prompts  │
+│ (You control)   │
+└─────────────────┘
+
+TIMED TEMPLATES (Pre-sequenced with timeline):
 ┌─────────────────┐  ┌─────────────────┐
-│ 📖 Story Circle │  │ 🧘 Meditation   │
-│ Take turns      │  │ Guided session  │
+│ 🎵 Group Dance  │  │ 🧘 Meditation   │
+│ Choreographed   │  │ Guided session  │
+│ [Timeline ⏱]   │  │ [Timeline ⏱]   │
 └─────────────────┘  └─────────────────┘
 
-┌─────────────────┐  ┌─────────────────┐
-│ 🎨 Art Together │  │ 🎭 Theater Game │
-│ Follow prompts  │  │ Improv & play   │
-└─────────────────┘  └─────────────────┘
+┌─────────────────┐
+│ 📖 Story Circle │
+│ Timed sequence  │
+│ [Timeline ⏱]   │
+└─────────────────┘
 ```
 
 ### Step 3: Customize Settings
 ```
 ┌────────────────────────────────────┐
-│  Customize: "Group Dance"          │
+│  Customize: "Group Dance" (TIMED) │
 └────────────────────────────────────┘
 
 NAMES:
 ├─ Swarm Name: [Morning Dance Session    ]
-├─ Creator Name: [DJ Sarah                ]
-└─ Participant Label: [Dancer             ]
+├─ Organizer Name: [DJ Sarah             ]
+└─ Participant Label: [Dancer            ]
 
 NUMBERS:
 ├─ Max Participants: [50                  ]
-├─ Session Duration: [30 minutes          ]
-└─ Sequence Timing: [Every 10 seconds     ]
+└─ Total Duration: [3:00 minutes          ]
 
-CONTENT:
+TIMELINE EDITOR (for TIMED templates only):
+┌────────────────────────────────────────┐
+│ [▶ Play] [⏸ Pause] [⏹ Stop]  0:00/3:00│
+├────────────────────────────────────────┤
+│ Everyone │████ Audio ████│ │██ Text ██││
+│ Group A  │     │██ Text ██│            │
+│ Group B  │          │████ Audio ████│  │
+│          0s    30s    60s   90s   120s │
+└────────────────────────────────────────┘
+│ [+ Add Audio] [+ Add Text] [+ Add TTS] │
+
+CONTENT LIBRARY:
 ├─ Audio: [Upload .mp3] or [Choose from library]
 ├─ Text: [Type instructions...            ]
 ├─ Video: [Upload .mp4] or [Choose from library]
@@ -357,6 +378,8 @@ CONTENT:
 
 SETTINGS:
 └─ Privacy: ○ Public  ● Private  ○ Invite-Only
+
+Note: LIVE templates skip timeline editor
 ```
 
 ### Step 4: Save & Launch
