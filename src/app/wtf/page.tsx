@@ -1,7 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import MainMenu from '@/components/MainMenu';
+import AppNav from '@/components/AppNav';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -15,7 +15,7 @@ const Container = styled.div`
 
 const Header = styled.header`
   text-align: center;
-  padding: 60px 20px 40px;
+  padding: 20px 20px 40px;
 `;
 
 const Logo = styled.h1`
@@ -110,7 +110,7 @@ const StepItem = styled.li`
 export default function WTFPage() {
   return (
     <Container>
-      <MainMenu />
+      <AppNav currentPage="wtf" />
       
       <Header>
         <Logo>❓ wtf?</Logo>

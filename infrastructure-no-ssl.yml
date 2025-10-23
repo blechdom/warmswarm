@@ -261,6 +261,8 @@ Resources:
               Value: production
             - Name: PORT
               Value: "4444"
+            - Name: CLIENT_URL
+              Value: !Sub http://${ApplicationLoadBalancer.DNSName}
             - Name: DATABASE_URL
               Value: !Sub 
                 - postgresql://postgres:${Password}@${DBEndpoint}:5432/swarms
@@ -294,7 +296,7 @@ Resources:
             - Name: NODE_ENV
               Value: production
             - Name: NEXT_PUBLIC_API_URL
-              Value: !Sub http://${DomainName}/api
+              Value: !Sub http://${ApplicationLoadBalancer.DNSName}
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -327,6 +329,9 @@ Resources:
         - !Ref PublicSubnet2
       SecurityGroups:
         - !Ref ALBSecurityGroup
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: 300
 
   # Target Groups
   FrontendTargetGroup:
@@ -356,6 +361,15 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 5
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: true
+        - Key: stickiness.type
+          Value: lb_cookie
+        - Key: stickiness.lb_cookie.duration_seconds
+          Value: 86400
+        - Key: deregistration_delay.timeout_seconds
+          Value: 30
 
   # HTTP Listener (Direct to frontend)
   HTTPListener:

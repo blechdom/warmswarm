@@ -277,7 +277,7 @@ export default function MyPage() {
         <TestSection>
           <TestTitle>📋 Quick Reference</TestTitle>
           <TestInstruction>
-            <strong>Access this showcase page:</strong> <code style={{ background: 'rgba(255,255,255,0.8)', padding: '2px 8px', borderRadius: '4px' }}>http://localhost:3444/menu-showcase</code>
+            <strong>Access this showcase page:</strong> <code style={{ background: 'rgba(255,255,255,0.8)', padding: '2px 8px', borderRadius: '4px' }}>http://localhost:3333/menu-showcase</code>
           </TestInstruction>
           <TestInstruction style={{ marginTop: '10px' }}>
             <strong>Component location:</strong> <code style={{ background: 'rgba(255,255,255,0.8)', padding: '2px 8px', borderRadius: '4px' }}>src/components/MainMenu.tsx</code>

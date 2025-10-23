@@ -48,3 +48,7 @@ backend/backups/warmswarm_*_*.sql
 # run backend/scripts/copy_telebrain_media.sh to restore
 public/snd/
 public/pics/
+
+# development scripts
+.pids/
+logs/

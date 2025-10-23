@@ -132,6 +132,7 @@ export default function MainMenu({ currentPath = '/' }: MainMenuProps) {
       <DesktopNav>
         <NavLink href="/create/collect">Collect</NavLink>
         <NavLink href="/create/cast">Cast</NavLink>
+        <NavLink href="/create/constellation">Constellation</NavLink>
         <NavLink href="/create/coordinate">Coordinate</NavLink>
         <NavLink href="/create/catalogue">Catalogue</NavLink>
         <NavLink href="/create/connect">Connect</NavLink>
@@ -150,6 +151,9 @@ export default function MainMenu({ currentPath = '/' }: MainMenuProps) {
         </MobileNavLink>
         <MobileNavLink href="/create/cast" onClick={closeMenu}>
           🎭 Cast
+        </MobileNavLink>
+        <MobileNavLink href="/create/constellation" onClick={closeMenu}>
+          🌟 Constellation
         </MobileNavLink>
         <MobileNavLink href="/create/coordinate" onClick={closeMenu}>
           🎯 Coordinate

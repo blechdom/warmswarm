@@ -44,3 +44,6 @@ Place all generated files in `/home/kgalvin/CascadeProjects/warmswarm/public/`
 
 Source image: `public/warmswarm-logo-transparent.png` (752 x 785, PNG with transparency)
 
+
+
+

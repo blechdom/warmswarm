@@ -230,7 +230,7 @@ const CreateSwarmButton = styled(Link)`
   transition: all 0.225s ease;
   
   &:hover {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
     transform: translateY(-2px);
   }
 `;

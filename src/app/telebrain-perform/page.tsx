@@ -38,7 +38,7 @@ function TelebrainPerformContent() {
 
     // Connect to Socket.IO
     if (swarmId) {
-      socketRef.current = io('http://localhost:4444');
+      socketRef.current = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4444');
       
       socketRef.current.on('connect', () => {
         console.log('Connected to server');

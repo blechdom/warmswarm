@@ -1,7 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import MainMenu from '@/components/MainMenu';
+import AppNav from '@/components/AppNav';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -15,7 +15,7 @@ const Container = styled.div`
 
 const Header = styled.header`
   text-align: center;
-  padding: 60px 20px 40px;
+  padding: 20px 20px 40px;
 `;
 
 const Logo = styled.h1`
@@ -105,7 +105,7 @@ const ContentDescription = styled.p`
 export default function Catalogue() {
   return (
     <Container>
-      <MainMenu />
+      <AppNav currentPage="create" />
       
       <Header>
         <Logo>📚 Catalogue</Logo>
@@ -159,6 +159,22 @@ export default function Catalogue() {
             <ContentTitle>Swarms</ContentTitle>
             <ContentDescription>
               Browse and manage all swarm configs
+            </ContentDescription>
+          </ContentCard>
+
+          <ContentCard href="/create/catalogue/templates">
+            <ContentIcon>📝</ContentIcon>
+            <ContentTitle>Templates</ContentTitle>
+            <ContentDescription>
+              Pre-built templates to get started quickly
+            </ContentDescription>
+          </ContentCard>
+
+          <ContentCard href="/create/catalogue/examples">
+            <ContentIcon>🚀</ContentIcon>
+            <ContentTitle>Examples</ContentTitle>
+            <ContentDescription>
+              Try working example swarms and performances
             </ContentDescription>
           </ContentCard>
         </ContentGrid>

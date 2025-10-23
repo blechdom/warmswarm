@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -137,13 +138,43 @@ const Pill = styled.span`
   font-weight: 500;
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
   
   &:hover {
     background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+`;
+
+const ClickablePill = styled.span`
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
   }
 `;
 
 export default function Home() {
+  const router = useRouter();
+  
+  const handlePillClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(href);
+  };
+  
   return (
     <Container>
       {/* Element 1: Header with Logo */}
@@ -166,15 +197,32 @@ export default function Home() {
             <ActionIcon>🐝</ActionIcon>
             <ActionTitle>swarm</ActionTitle>
             <ActionDescription>Join a live swarm</ActionDescription>
+            <PillsContainer>
+              <ClickablePill onClick={(e) => handlePillClick(e, '/examples')}>
+                🚀 Try an example swarm
+              </ClickablePill>
+              <ClickablePill onClick={(e) => handlePillClick(e, '/create/catalogue/swarms')}>
+                ⚡ Start a swarm
+              </ClickablePill>
+              <ClickablePill onClick={(e) => handlePillClick(e, '/swarms')}>
+                👥 Join a swarm
+              </ClickablePill>
+            </PillsContainer>
           </ActionCard>
           
           <ActionCard href="/create">
-            <ActionIcon>⚙️</ActionIcon>
+            <ActionIcon>✨</ActionIcon>
             <ActionTitle>create</ActionTitle>
             <ActionDescription>Build and organize content</ActionDescription>
             <PillsContainer>
+              <ClickablePill onClick={(e) => handlePillClick(e, '/templates')}>
+                📝 Get started with a template
+              </ClickablePill>
               <Pill>📦 Collect</Pill>
               <Pill>🎭 Cast</Pill>
+              <ClickablePill onClick={(e) => handlePillClick(e, '/create/constellation')}>
+                🌟 Constellation
+              </ClickablePill>
               <Pill>🎯 Coordinate</Pill>
               <Pill>📚 Catalogue</Pill>
               <Pill>🔗 Connect</Pill>

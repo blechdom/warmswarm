@@ -11,7 +11,8 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:3333",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -23,7 +24,10 @@ const pool = new Pool({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:3333",
+  credentials: true
+}));
 app.use(express.json());
 
 // Health check endpoint
@@ -249,18 +253,21 @@ io.on('connection', (socket) => {
 
   // Join swarm session
   socket.on('join-swarm', ({ swarmId, nickname, role = 'all' }) => {
-    console.log(`${nickname} joining swarm ${swarmId} with role ${role}`);
+    console.log(`[JOIN] ${nickname} joining swarm ${swarmId} with role ${role}`);
     
     // Join main swarm room
     socket.join(swarmId);
+    console.log(`  - Joined main room: ${swarmId}`);
     
     // Join role-based room
     const roleRoom = `${swarmId}:${role}`;
     socket.join(roleRoom);
+    console.log(`  - Joined role room: ${roleRoom}`);
     
     // Also join "all" room if not already in it
     if (role !== 'all') {
       socket.join(`${swarmId}:all`);
+      console.log(`  - Joined all room: ${swarmId}:all`);
     }
     
     socketToSwarm.set(socket.id, swarmId);
@@ -330,6 +337,10 @@ io.on('connection', (socket) => {
       // Broadcast to each target room
       targetRooms.forEach(receiverRole => {
         const targetRoom = `${swarmId}:${receiverRole}`;
+        const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
+        const numReceivers = roomSockets ? roomSockets.size : 0;
+        console.log(`  [BROADCAST] Sending to room: ${targetRoom} (${numReceivers} clients)`);
+        
         io.to(targetRoom).emit('live-message', {
           nickname: user.nickname,
           message: message,
@@ -340,7 +351,7 @@ io.on('connection', (socket) => {
         });
       });
       
-      console.log(`Sender ${user.nickname} broadcasting to ${target}: ${message}`);
+      console.log(`[LIVE MSG] Sender ${user.nickname} broadcasting to ${target}: "${message}"`);
     }
   });
 
@@ -436,8 +447,8 @@ io.on('connection', (socket) => {
   socket.on('chat-message', ({ swarmId, message }) => {
     const user = socketToUser.get(socket.id);
     if (user && swarmId) {
-      // Broadcast message to all users in the swarm
-      io.to(swarmId).emit('chat-message', {
+      // Broadcast message to all users in the swarm (including sender)
+      io.in(swarmId).emit('chat-message', {
         nickname: user.nickname,
         message: message,
         timestamp: new Date().toISOString(),

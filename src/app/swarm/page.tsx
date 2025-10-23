@@ -17,23 +17,23 @@ const Container = styled.div`
 
 const Header = styled.header`
   text-align: center;
-  padding: 40px 20px 20px;
+  padding: 20px 20px 10px;
 `;
 
 const Logo = styled.h1`
-  font-size: 2.5rem;
+  font-size: 2rem;
   color: white;
-  margin: 0 0 10px 0;
+  margin: 0 0 5px 0;
   font-weight: 700;
   text-shadow: 0 2px 20px rgba(0,0,0,0.3);
   
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 `;
 
 const Tagline = styled.p`
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
   font-weight: 300;
@@ -43,8 +43,8 @@ const Main = styled.main`
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 20px;
-  padding-bottom: 40px;
+  padding: 10px;
+  padding-bottom: 20px;
 `;
 
 const ContentContainer = styled.div`
@@ -57,11 +57,12 @@ const ContentContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  height: 650px;
+  height: calc(100vh - 180px);
+  max-height: 700px;
   overflow: hidden;
   
   @media (max-width: 768px) {
-    height: 550px;
+    height: calc(100vh - 150px);
   }
 `;
 
@@ -73,11 +74,11 @@ const TabBar = styled.div`
 
 const Tab = styled.button<{ $active: boolean }>`
   flex: 1;
-  padding: 20px;
+  padding: 12px;
   background: ${props => props.$active ? 'rgba(255, 255, 255, 0.2)' : 'transparent'};
   color: white;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -89,8 +90,8 @@ const Tab = styled.button<{ $active: boolean }>`
   }
   
   @media (max-width: 768px) {
-    padding: 15px;
-    font-size: 1rem;
+    padding: 10px;
+    font-size: 0.9rem;
   }
 `;
 
@@ -98,11 +99,11 @@ const TabContent = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 30px;
+  padding: 15px;
   overflow: hidden;
   
   @media (max-width: 768px) {
-    padding: 20px;
+    padding: 12px;
   }
 `;
 
@@ -115,23 +116,23 @@ const ChatContainer = styled.div`
 const MessagesArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 20px;
-  padding: 15px;
+  margin-bottom: 12px;
+  padding: 10px;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  border-radius: 8px;
   
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   
   &::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 3px;
   }
   
   &::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
+    border-radius: 3px;
     
     &:hover {
       background: rgba(255, 255, 255, 0.4);
@@ -140,7 +141,7 @@ const MessagesArea = styled.div`
 `;
 
 const Message = styled.div<{ $isOwn?: boolean }>`
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   text-align: ${props => props.$isOwn ? 'right' : 'left'};
 `;
 
@@ -155,11 +156,11 @@ const MessageBubble = styled.div<{ $isOwn?: boolean }>`
   display: inline-block;
   background: ${props => props.$isOwn ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.2)'};
   color: white;
-  padding: 10px 15px;
-  border-radius: 15px;
+  padding: 8px 12px;
+  border-radius: 12px;
   max-width: 70%;
   word-wrap: break-word;
-  font-size: 1rem;
+  font-size: 0.95rem;
 `;
 
 const MessageTime = styled.div`
@@ -170,7 +171,7 @@ const MessageTime = styled.div`
 
 const InputArea = styled.form`
   display: flex;
-  gap: 10px;
+  gap: 8px;
 `;
 
 const MessageInput = styled.input`
@@ -198,13 +199,15 @@ const SendButton = styled.button`
   background: rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
-  padding: 12px 30px;
+  padding: 12px 24px;
   border-radius: 25px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     background: rgba(255, 255, 255, 0.4);
@@ -213,6 +216,12 @@ const SendButton = styled.button`
   
   &:active {
     transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -238,17 +247,20 @@ const NicknameModal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(100, 100, 100, 0.95);
+  backdrop-filter: blur(10px);
   padding: 40px;
   border-radius: 20px;
   max-width: 400px;
   width: 90%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 `;
 
 const ModalTitle = styled.h2`
-  color: #333;
+  color: white;
   margin: 0 0 20px 0;
   font-size: 1.5rem;
+  text-align: center;
 `;
 
 const ModalInput = styled.input`
@@ -335,6 +347,35 @@ const RoleSelectorBar = styled.div`
   }
 `;
 
+const RoleDisplayBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 15px;
+  background: rgba(102, 126, 234, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  margin: -15px -15px 12px -15px;
+  
+  @media (max-width: 768px) {
+    margin: -12px -12px 10px -12px;
+    padding: 6px 12px;
+    flex-wrap: wrap;
+  }
+`;
+
+const RoleDisplayText = styled.div`
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  justify-content: center;
+`;
+
 const RoleLabel = styled.label`
   color: white;
   font-weight: 600;
@@ -373,43 +414,46 @@ const ModalSelect = styled.select`
   width: 100%;
   padding: 12px;
   margin-bottom: 15px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(50, 50, 70, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   color: white;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-family: inherit;
   cursor: pointer;
+  font-weight: 500;
   
   &:focus {
     outline: none;
     border-color: #667eea;
+    background: rgba(70, 70, 90, 0.95);
   }
   
   option {
     background: #2c2c2c;
     color: white;
+    padding: 8px;
   }
 `;
 
 const LiveMessagesArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  margin-top: 20px;
-  padding-right: 10px;
+  margin-top: 10px;
+  padding-right: 8px;
   
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   
   &::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    border-radius: 3px;
   }
   
   &::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+    border-radius: 3px;
   }
   
   &::-webkit-scrollbar-thumb:hover {
@@ -420,9 +464,12 @@ const LiveMessagesArea = styled.div`
 const LiveMessage = styled.div`
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 15px 20px;
-  margin-bottom: 15px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   animation: fadeIn 0.3s ease;
   
   @keyframes fadeIn {
@@ -446,23 +493,29 @@ const LiveMessageHeader = styled.div`
 
 const LiveMessageRole = styled.span`
   background: rgba(102, 126, 234, 0.5);
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const LiveMessageTime = styled.span`
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
 `;
 
 const LiveMessageContent = styled.div`
   color: white;
-  font-size: 1.1rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  flex: 1;
 `;
 
 interface ChatMessage {
@@ -479,7 +532,6 @@ export default function SwarmPage() {
   const [selectedRole, setSelectedRole] = useState('receiver-1');
   const [targetAudience, setTargetAudience] = useState('all');
   const [showNicknameModal, setShowNicknameModal] = useState(true);
-  const [nicknameInput, setNicknameInput] = useState('');
   const [roleInput, setRoleInput] = useState('receiver-1');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
@@ -496,15 +548,7 @@ export default function SwarmPage() {
   const availableRoles = ['sender', 'receiver-1', 'receiver-2', 'receiver-3', 'receiver-4'];
   const targetOptions = ['all', 'even', 'odd', '1', '2', '3', '4'];
 
-  useEffect(() => {
-    // Check for stored nickname
-    const storedNickname = localStorage.getItem('swarm-nickname');
-    if (storedNickname) {
-      setNickname(storedNickname);
-      setShowNicknameModal(false);
-      connectToSwarm(storedNickname);
-    }
-  }, []);
+  // Removed localStorage check - popup will show on every page load for easier testing
 
   const connectToSwarm = (nick: string, role: string = 'all') => {
     const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4444');
@@ -564,15 +608,18 @@ export default function SwarmPage() {
         role: newRole
       });
       
-      // Add a system message to live messages
+      // Add a system message to both chat areas
       const roleDisplay = newRole.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-      setLiveMessages(prev => [...prev, {
+      const systemMessage = {
         nickname: 'System',
         message: `Switched to ${roleDisplay} role`,
         timestamp: new Date().toISOString(),
         socketId: 'system',
         role: 'system'
-      }]);
+      };
+      
+      setLiveMessages(prev => [...prev, systemMessage]);
+      setMessages(prev => [...prev, systemMessage]);
     }
   };
 
@@ -620,13 +667,11 @@ export default function SwarmPage() {
   }, [liveMessages]);
 
   const handleNicknameSubmit = () => {
-    if (nicknameInput.trim()) {
-      localStorage.setItem('swarm-nickname', nicknameInput);
-      setNickname(nicknameInput);
-      setSelectedRole(roleInput);
-      setShowNicknameModal(false);
-      connectToSwarm(nicknameInput, roleInput);
-    }
+    // Use role as the nickname (no localStorage)
+    setNickname(roleInput);
+    setSelectedRole(roleInput);
+    setShowNicknameModal(false);
+    connectToSwarm(roleInput, roleInput);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -674,6 +719,27 @@ export default function SwarmPage() {
           <TabContent>
             {activeTab === 'control' && (
               <ChatContainer>
+                <RoleDisplayBar>
+                  <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
+                    {selectedRole === 'sender' ? '📡' : '📺'} {selectedRole.replace('-', ' ')}
+                  </RoleDisplayText>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <RoleLabel>Change Role:</RoleLabel>
+                    <RoleSelect
+                      value={selectedRole}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                      disabled={!socket}
+                      style={{ minWidth: '130px' }}
+                    >
+                      <option value="sender">Sender</option>
+                      <option value="receiver-1">Receiver 1</option>
+                      <option value="receiver-2">Receiver 2</option>
+                      <option value="receiver-3">Receiver 3</option>
+                      <option value="receiver-4">Receiver 4</option>
+                    </RoleSelect>
+                  </div>
+                </RoleDisplayBar>
+
                 <MessagesArea>
                   {messages.map((msg, index) => (
                     msg.socketId === 'system' ? (
@@ -708,39 +774,26 @@ export default function SwarmPage() {
             
             {activeTab === 'live' && (
               <ChatContainer>
-                <RoleSelectorBar>
-                  <RoleLabel>Your Role:</RoleLabel>
-                  <RoleSelect
-                    value={selectedRole}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                    disabled={!socket}
-                  >
-                    <option value="sender">Sender</option>
-                    <option value="receiver-1">Receiver 1</option>
-                    <option value="receiver-2">Receiver 2</option>
-                    <option value="receiver-3">Receiver 3</option>
-                    <option value="receiver-4">Receiver 4</option>
-                  </RoleSelect>
-                  
-                  {selectedRole === 'sender' && (
-                    <>
-                      <RoleLabel style={{ marginLeft: '15px' }}>Send to:</RoleLabel>
-                      <RoleSelect
-                        value={targetAudience}
-                        onChange={(e) => setTargetAudience(e.target.value)}
-                        disabled={!socket}
-                      >
-                        <option value="all">All</option>
-                        <option value="even">Even (2, 4)</option>
-                        <option value="odd">Odd (1, 3)</option>
-                        <option value="1">Receiver 1</option>
-                        <option value="2">Receiver 2</option>
-                        <option value="3">Receiver 3</option>
-                        <option value="4">Receiver 4</option>
-                      </RoleSelect>
-                    </>
-                  )}
-                </RoleSelectorBar>
+                <RoleDisplayBar>
+                  <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
+                    {selectedRole === 'sender' ? '📡' : '📺'} {selectedRole.replace('-', ' ')}
+                  </RoleDisplayText>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <RoleLabel>Change Role:</RoleLabel>
+                    <RoleSelect
+                      value={selectedRole}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                      disabled={!socket}
+                      style={{ minWidth: '130px' }}
+                    >
+                      <option value="sender">Sender</option>
+                      <option value="receiver-1">Receiver 1</option>
+                      <option value="receiver-2">Receiver 2</option>
+                      <option value="receiver-3">Receiver 3</option>
+                      <option value="receiver-4">Receiver 4</option>
+                    </RoleSelect>
+                  </div>
+                </RoleDisplayBar>
 
                 <LiveMessagesArea>
                   {liveMessages.length === 0 ? (
@@ -774,11 +827,9 @@ export default function SwarmPage() {
                           <SystemMessage key={index}>{msg.message}</SystemMessage>
                         ) : (
                           <LiveMessage key={index}>
-                            <LiveMessageHeader>
-                              <LiveMessageRole>{msg.role || selectedRole}</LiveMessageRole>
-                              <LiveMessageTime>{formatTime(msg.timestamp)}</LiveMessageTime>
-                            </LiveMessageHeader>
+                            <LiveMessageRole>{msg.role || selectedRole}</LiveMessageRole>
                             <LiveMessageContent>{msg.message}</LiveMessageContent>
+                            <LiveMessageTime>{formatTime(msg.timestamp)}</LiveMessageTime>
                           </LiveMessage>
                         )
                       ))}
@@ -789,15 +840,29 @@ export default function SwarmPage() {
                 
                 {selectedRole === 'sender' && (
                   <InputArea onSubmit={handleSendLiveMessage}>
+                    <RoleSelect
+                      value={targetAudience}
+                      onChange={(e) => setTargetAudience(e.target.value)}
+                      disabled={!socket}
+                      style={{ width: '140px', flexShrink: 0 }}
+                    >
+                      <option value="all">All</option>
+                      <option value="even">Even (2, 4)</option>
+                      <option value="odd">Odd (1, 3)</option>
+                      <option value="1">Receiver 1</option>
+                      <option value="2">Receiver 2</option>
+                      <option value="3">Receiver 3</option>
+                      <option value="4">Receiver 4</option>
+                    </RoleSelect>
                     <MessageInput
                       type="text"
                       value={liveMessageInput}
                       onChange={(e) => setLiveMessageInput(e.target.value)}
-                      placeholder={`Broadcast to ${targetAudience}...`}
+                      placeholder="Type message to send..."
                       disabled={!socket}
                     />
                     <SendButton type="submit" disabled={!socket || !liveMessageInput.trim()}>
-                      Broadcast
+                      ✈️
                     </SendButton>
                   </InputArea>
                 )}
@@ -811,26 +876,19 @@ export default function SwarmPage() {
         <NicknameModal>
           <ModalContent>
             <ModalTitle>Join the Swarm</ModalTitle>
-            <ModalInput
-              type="text"
-              value={nicknameInput}
-              onChange={(e) => setNicknameInput(e.target.value)}
-              placeholder="Enter your nickname"
-              onKeyPress={(e) => e.key === 'Enter' && handleNicknameSubmit()}
-              autoFocus
-            />
             <ModalSelect
               value={roleInput}
               onChange={(e) => setRoleInput(e.target.value)}
+              autoFocus
             >
-              <option value="receiver-1">Receiver 1 (default)</option>
+              <option value="receiver-1">Receiver 1</option>
               <option value="receiver-2">Receiver 2</option>
               <option value="receiver-3">Receiver 3</option>
               <option value="receiver-4">Receiver 4</option>
               <option value="sender">Sender</option>
             </ModalSelect>
-            <ModalButton onClick={handleNicknameSubmit} disabled={!nicknameInput.trim()}>
-              Join
+            <ModalButton onClick={handleNicknameSubmit}>
+              Join as {roleInput}
             </ModalButton>
           </ModalContent>
         </NicknameModal>
