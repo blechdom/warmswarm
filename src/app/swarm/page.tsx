@@ -1015,16 +1015,15 @@ export default function SwarmPage() {
 
     // Listen for fullscreen messages (for groups)
     newSocket.on('fullscreen-message', (data: { text: string, color: string, group?: string }) => {
-      if (selectedRole === 'multiview' && data.group) {
-        // Update specific group in multiview
+      // Always update multiview messages if group is specified
+      if (data.group) {
         setMultiviewMessages(prev => ({
           ...prev,
           [data.group as string]: { text: data.text, color: data.color }
         }));
-      } else {
-        // Update single fullscreen message for individual group view
-        setCurrentFullscreenMessage(data);
       }
+      // Also update single fullscreen message for individual group view
+      setCurrentFullscreenMessage(data);
     });
 
     // Listen for live swarm messages (role-based content)
