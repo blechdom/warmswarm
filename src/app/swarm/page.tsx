@@ -803,7 +803,7 @@ export default function SwarmPage() {
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
                       disabled={!socket}
-                      style={{ width: '100px', flexShrink: 0 }}
+                      style={{ width: '70px', minWidth: '70px', maxWidth: '70px', flexShrink: 0, flexGrow: 0 }}
                     >
                       <option value="all">All</option>
                       <option value="even">Even</option>
@@ -819,6 +819,7 @@ export default function SwarmPage() {
                       onChange={(e) => setLiveMessageInput(e.target.value)}
                       placeholder="Type message to send..."
                       disabled={!socket}
+                      style={{ flex: 1 }}
                     />
                     <SendButton type="submit" disabled={!socket || !liveMessageInput.trim()}>
                       ✈️
