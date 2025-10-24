@@ -3,16 +3,18 @@
 import { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { io, Socket } from 'socket.io-client';
-import MainMenu from '@/components/MainMenu';
 
 const Container = styled.div`
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   font-family: 'Quantico', Arial, Helvetica, sans-serif;
-  padding: 20px;
+  padding: 0;
+  margin: 0;
   box-sizing: border-box;
+  overflow: hidden;
 `;
 
 const Header = styled.header`
@@ -43,27 +45,22 @@ const Main = styled.main`
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 10px;
-  padding-bottom: 20px;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 `;
 
 const ContentContainer = styled.div`
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  border: none;
+  border-radius: 0;
   padding: 0;
-  max-width: 1000px;
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 180px);
-  max-height: 700px;
   overflow: hidden;
-  
-  @media (max-width: 768px) {
-    height: calc(100vh - 150px);
-  }
 `;
 
 const TabBar = styled.div`
@@ -527,21 +524,20 @@ interface ChatMessage {
 }
 
 export default function SwarmPage() {
-  // Removed Control Room - only using Live Swarm chat now
-  const [nickname, setNickname] = useState('');
+  // Auto-generate a simple nickname for participants
+  const [nickname, setNickname] = useState(() => `Bee${Math.floor(Math.random() * 1000)}`);
   const [selectedRole, setSelectedRole] = useState('receiver-1');
-  const [roleInput, setRoleInput] = useState('receiver-1'); // Needed for join modal
-  const [targetAudience, setTargetAudience] = useState('all'); // For sender broadcasting
-  const [showNicknameModal, setShowNicknameModal] = useState(true);
+  const [roleInput, setRoleInput] = useState('receiver-1');
+  const [targetAudience, setTargetAudience] = useState('all');
+  const [showNicknameModal, setShowNicknameModal] = useState(false); // No modal for participants
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const [liveMessageInput, setLiveMessageInput] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentSocketId, setCurrentSocketId] = useState('');
   const liveMessagesEndRef = useRef<HTMLDivElement>(null);
   
-  const swarmId = 'default-swarm'; // For now, use a default swarm
+  const swarmId = 'default-swarm';
   
-  // Available roles - hardcoded for sender/receiver pattern
   const availableRoles = ['sender', 'receiver-1', 'receiver-2', 'receiver-3', 'receiver-4'];
   const targetOptions = ['all', 'even', 'odd', '1', '2', '3', '4'];
 
@@ -673,11 +669,9 @@ export default function SwarmPage() {
 
   return (
     <Container>
-      <MainMenu />
-      
       <Main>
         <ContentContainer>
-          <TabContent>
+          <TabContent style={{ padding: 0 }}>
             {/* Control Room removed - only showing Live Swarm chat */}
             {false && (
               <ChatContainer>

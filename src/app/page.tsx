@@ -9,7 +9,7 @@ const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #d63384 0%, #d946ef 50%, #dc2626 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #8b5cf6 100%);
   padding: 20px;
   box-sizing: border-box;
   position: relative;
@@ -64,7 +64,7 @@ const HelpLink = styled(Link)`
   position: absolute;
   top: 20px;
   right: 20px;
-  color: white;
+  color: rgba(255, 255, 255, 0.95);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -73,16 +73,17 @@ const HelpLink = styled(Link)`
   font-size: 1.1rem;
   padding: 10px 20px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
   border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all 0.2s ease;
   z-index: 10;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
   
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.35);
     border-color: white;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   }
 `;
 
