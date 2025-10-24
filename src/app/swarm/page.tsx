@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import styled from 'styled-components';
 import { io, Socket } from 'socket.io-client';
 
@@ -348,17 +349,38 @@ const RoleDisplayBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 8px 15px;
+  gap: 15px;
+  padding: 15px 20px;
   background: rgba(102, 126, 234, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  margin: -15px -15px 12px -15px;
   
   @media (max-width: 768px) {
-    margin: -12px -12px 10px -12px;
-    padding: 6px 12px;
+    padding: 12px 15px;
     flex-wrap: wrap;
+    gap: 10px;
   }
+`;
+
+const HomeLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+  }
+`;
+
+const LogoImage = styled.img`
+  height: 2rem;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 `;
 
 const RoleDisplayText = styled.div`
@@ -381,24 +403,34 @@ const RoleLabel = styled.label`
 `;
 
 const RoleSelect = styled.select`
-  flex: 1;
-  padding: 10px 15px;
+  padding: 8px 12px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
+  border-radius: 8px;
   color: white;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 30px;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.25);
   }
   
   &:focus {
     outline: none;
     border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   
   option {
@@ -731,19 +763,22 @@ export default function SwarmPage() {
             {/* Only showing Live Swarm chat now */}
             <ChatContainer>
                 <RoleDisplayBar>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Logo style={{ margin: 0 }}>🐝 Swarm</Logo>
-                  </div>
-                  <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
-                    {selectedRole === 'sender' ? '📡' : '📺'} {selectedRole.replace('-', ' ')}
+                  <HomeLink href="/">
+                    warm
+                    <LogoImage 
+                      src="/warmswarm-logo-transparent.png" 
+                      alt="WarmSwarm Logo"
+                    />
+                    swarm
+                  </HomeLink>
+                  <RoleDisplayText>
+                    Test Swarm
                   </RoleDisplayText>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <RoleLabel>Change Role:</RoleLabel>
                     <RoleSelect
                       value={selectedRole}
                       onChange={(e) => handleRoleChange(e.target.value)}
                       disabled={!socket}
-                      style={{ minWidth: '130px' }}
                     >
                       <option value="sender">Sender</option>
                       <option value="receiver-1">Receiver 1</option>
