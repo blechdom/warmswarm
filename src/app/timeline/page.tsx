@@ -297,22 +297,27 @@ export default function TimelineDemo() {
               onChange={setData}
               editorData={data}
               effects={effects}
+              dragLine={true}
+              minScaleCount={20}
+              maxScaleCount={100}
               getScaleRender={(scale) => <div style={{ color: '#666' }}>{scale}s</div>}
               getActionRender={(action) => (
                 <div
                   style={{
                     background: action.data.color,
                     color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
+                    padding: '6px 10px',
+                    borderRadius: '6px',
                     height: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    fontSize: '0.85rem',
+                    fontSize: '0.9rem',
                     fontWeight: '600',
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
                     textOverflow: 'ellipsis',
+                    cursor: 'move',
+                    userSelect: 'none',
                   }}
                 >
                   {action.data.content}
@@ -322,7 +327,8 @@ export default function TimelineDemo() {
               style={{
                 width: '100%',
                 height: '280px',
-                touchAction: 'none', // Better touch handling
+                touchAction: 'pan-y pinch-zoom', // Allow vertical panning and zoom
+                cursor: 'default',
               }}
             />
             <style jsx global>{`
@@ -358,13 +364,13 @@ export default function TimelineDemo() {
         )}
 
         <div style={{ marginTop: '20px', padding: '20px', background: 'white', border: '2px solid #667eea', borderRadius: '12px' }}>
-          <strong style={{ fontSize: '1.1rem', color: '#333' }}>📱 How to Use:</strong>
+          <strong style={{ fontSize: '1.1rem', color: '#333' }}>🖱️ How to Use (Desktop):</strong>
           <ul style={{ marginTop: '12px', paddingLeft: '20px', lineHeight: '1.8', color: '#333' }}>
-            <li><strong style={{ color: '#667eea' }}>Add events:</strong> Click any button above to add (starts on top track)</li>
-            <li><strong style={{ color: '#f093fb' }}>Desktop - Move between tracks:</strong> Click and drag events up/down</li>
-            <li><strong style={{ color: '#764ba2' }}>Desktop - Adjust timing:</strong> Click and drag events left/right</li>
-            <li><strong style={{ color: '#2ecc71' }}>Desktop - Resize:</strong> Click and drag the edges</li>
-            <li style={{ marginTop: '10px', fontSize: '1.05rem' }}><strong style={{ color: '#e74c3c' }}>📱 Mobile Note:</strong> Timeline library has limited touch support. For best experience, use on desktop. Mobile gestures may not work reliably for dragging between tracks.</li>
+            <li><strong style={{ color: '#667eea' }}>Add events:</strong> Click any button above (starts on top track)</li>
+            <li><strong style={{ color: '#f093fb' }}>Move between tracks:</strong> Click and hold on an event, then drag UP or DOWN to move it to a different track. The event will snap to the track you drag it to.</li>
+            <li><strong style={{ color: '#764ba2' }}>Adjust timing:</strong> Click and drag events LEFT/RIGHT horizontally to change when they happen</li>
+            <li><strong style={{ color: '#2ecc71' }}>Resize duration:</strong> Click and drag the LEFT or RIGHT edge of an event to make it longer or shorter</li>
+            <li style={{ marginTop: '10px', fontSize: '1.05rem' }}><strong style={{ color: '#e74c3c' }}>📱 Mobile Note:</strong> Touch gestures have limited support. You can tap to add events and try dragging, but cross-track dragging may not work reliably. Desktop recommended for best experience.</li>
             <li style={{ marginTop: '8px' }}><strong>Track colors:</strong> Everyone (blue) • Group A (pink) • Group B (purple) • Solo (green)</li>
           </ul>
         </div>
