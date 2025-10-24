@@ -563,7 +563,8 @@ export default function SwarmPage() {
     });
 
     newSocket.on('user-joined', (data) => {
-      setMessages(prev => [...prev, {
+      // Add to live messages instead
+      setLiveMessages(prev => [...prev, {
         nickname: 'System',
         message: `${data.nickname} joined the swarm`,
         timestamp: new Date().toISOString(),
@@ -572,16 +573,13 @@ export default function SwarmPage() {
     });
 
     newSocket.on('user-left', (data) => {
-      setMessages(prev => [...prev, {
+      // Add to live messages instead
+      setLiveMessages(prev => [...prev, {
         nickname: 'System',
         message: `${data.nickname} left the swarm`,
         timestamp: new Date().toISOString(),
         socketId: 'system'
       }]);
-    });
-
-    newSocket.on('chat-message', (data: ChatMessage) => {
-      setMessages(prev => [...prev, data]);
     });
 
     // Listen for live swarm messages (role-based content)
@@ -605,7 +603,7 @@ export default function SwarmPage() {
         role: newRole
       });
       
-      // Add a system message to both chat areas
+      // Add a system message to live chat
       const roleDisplay = newRole.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
       const systemMessage = {
         nickname: 'System',
@@ -616,7 +614,6 @@ export default function SwarmPage() {
       };
       
       setLiveMessages(prev => [...prev, systemMessage]);
-      setMessages(prev => [...prev, systemMessage]);
     }
   };
 
