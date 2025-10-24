@@ -13,7 +13,12 @@ const io = new Server(server, {
     origin: process.env.CLIENT_URL || "http://localhost:3333",
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  transports: ['polling', 'websocket'],
+  path: '/socket.io/',
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
 const port = process.env.PORT || 4444;
@@ -249,7 +254,11 @@ const socketToSwarm = new Map(); // socketId -> swarmId
 const socketToUser = new Map(); // socketId -> { nickname, swarmId }
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('✅ Client connected:', socket.id, '| Transport:', socket.conn.transport.name);
+  
+  socket.conn.on('upgrade', () => {
+    console.log('🔄 Transport upgraded to:', socket.conn.transport.name);
+  });
 
   // Join swarm session
   socket.on('join-swarm', ({ swarmId, nickname, role = 'all' }) => {
@@ -460,7 +469,10 @@ io.on('connection', (socket) => {
 
 // Start server
 server.listen(port, () => {
-  console.log(`WarmSwarm backend server running on port ${port}`);
+  console.log(`🐝 WarmSwarm backend server running on port ${port}`);
+  console.log(`📡 Socket.IO enabled with transports: polling, websocket`);
+  console.log(`🌐 CORS allowed origin: ${process.env.CLIENT_URL || "http://localhost:3333"}`);
+  console.log(`🔧 Environment: ${process.env.NODE_ENV || "development"}`);
 });
 
 // Graceful shutdown

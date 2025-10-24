@@ -548,7 +548,13 @@ export default function SwarmPage() {
   // Removed localStorage check - popup will show on every page load for easier testing
 
   const connectToSwarm = (nick: string, role: string = 'all') => {
-    const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4444');
+    const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4444', {
+      transports: ['polling', 'websocket'],
+      path: '/socket.io/',
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+    });
     
     newSocket.on('connect', () => {
       console.log('Connected to socket');
