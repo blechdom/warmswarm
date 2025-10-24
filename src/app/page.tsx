@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
-const Container = styled.div\`
+const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -15,17 +15,17 @@ const Container = styled.div\`
   position: relative;
   overflow: hidden;
   font-family: 'Quantico', Arial, Helvetica, sans-serif;
-\`;
+`;
 
-const Header = styled.header\`
+const Header = styled.header`
   text-align: center;
   margin-bottom: 40px;
   padding-top: 40px;
   z-index: 5;
   position: relative;
-\`;
+`;
 
-const Logo = styled.h1\`
+const Logo = styled.h1`
   font-size: 3.5rem;
   color: white;
   margin: 0 0 20px 0;
@@ -39,9 +39,9 @@ const Logo = styled.h1\`
   @media (max-width: 480px) {
     font-size: 2.5rem;
   }
-\`;
+`;
 
-const LogoImage = styled.img\`
+const LogoImage = styled.img`
   height: 7rem;
   width: auto;
   filter: drop-shadow(0 2px 10px rgba(0,0,0,0.3));
@@ -51,16 +51,16 @@ const LogoImage = styled.img\`
     height: 5rem;
     margin: 0 5px;
   }
-\`;
+`;
 
-const Tagline = styled.p\`
+const Tagline = styled.p`
   font-size: 1.2rem;
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
   text-shadow: 0 1px 5px rgba(0,0,0,0.2);
-\`;
+`;
 
-const HelpLink = styled(Link)\`
+const HelpLink = styled(Link)`
   position: absolute;
   top: 20px;
   right: 20px;
@@ -84,9 +84,9 @@ const HelpLink = styled(Link)\`
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
   }
-\`;
+`;
 
-const Main = styled.main\`
+const Main = styled.main`
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -97,9 +97,9 @@ const Main = styled.main\`
   z-index: 5;
   position: relative;
   gap: 20px;
-\`;
+`;
 
-const ActionGrid = styled.div\`
+const ActionGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
@@ -108,9 +108,9 @@ const ActionGrid = styled.div\`
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
-\`;
+`;
 
-const ActionCard = styled.div\`
+const ActionCard = styled.div`
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -125,9 +125,9 @@ const ActionCard = styled.div\`
     transform: translateY(-5px);
     box-shadow: 0 15px 40px rgba(0,0,0,0.3);
   }
-\`;
+`;
 
-const LinkCard = styled(Link)\`
+const LinkCard = styled(Link)`
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -144,31 +144,36 @@ const LinkCard = styled(Link)\`
     transform: translateY(-5px);
     box-shadow: 0 15px 40px rgba(0,0,0,0.3);
   }
-\`;
+`;
 
-const ActionIcon = styled.div\`
+const ActionIcon = styled.div`
   font-size: 4rem;
   margin-bottom: 20px;
-\`;
+`;
 
-const ActionTitle = styled.h2\`
+const ActionTitle = styled.h2`
   color: white;
   margin: 0 0 10px 0;
   font-size: 2rem;
   font-weight: 700;
   text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-\`;
+`;
 
-const ActionDescription = styled.p\`
+const ActionDescription = styled.p`
   color: rgba(255, 255, 255, 0.85);
   margin: 10px 0 20px 0;
   font-size: 1rem;
   line-height: 1.5;
-\`;
+`;
 
-const CodeInput = styled.input\`
+const CodeInputWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const CodeInput = styled.input`
   width: 200px;
-  padding: 15px 20px;
+  padding: 15px 50px 15px 20px;
   font-size: 2rem;
   text-align: center;
   text-transform: uppercase;
@@ -191,53 +196,61 @@ const CodeInput = styled.input\`
     color: rgba(0, 0, 0, 0.3);
     letter-spacing: 0.3rem;
   }
-\`;
+`;
 
-const JoinButton = styled.button\`
-  margin-top: 15px;
-  padding: 12px 30px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: white;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid white;
-  border-radius: 12px;
+const SubmitArrow = styled.button<{ disabled: boolean }>`
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
+  padding: 0;
+  opacity: ${props => props.disabled ? 0.3 : 1};
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
   
   &:hover:not(:disabled) {
-    background: white;
-    color: #d946ef;
-    transform: translateY(-2px);
+    transform: translateY(-50%) translateX(3px);
   }
   
   &:disabled {
-    opacity: 0.5;
     cursor: not-allowed;
   }
-\`;
+`;
 
-const SecondaryAction = styled.div\`
+
+const SecondaryAction = styled.div`
   text-align: center;
   margin-top: 40px;
-\`;
+`;
 
-const SecondaryLink = styled(Link)\`
+const SecondaryLink = styled(Link)`
   color: white;
   text-decoration: none;
   font-weight: 600;
+  font-size: 1rem;
   padding: 10px 20px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s ease;
   
   &:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
   }
-\`;
+`;
 
 export default function Home() {
   const router = useRouter();
@@ -252,7 +265,7 @@ export default function Home() {
 
   const handleJoinClick = () => {
     if (inviteCode.length === 4) {
-      router.push(\`/join?code=\${inviteCode}\`);
+      router.push(`/join?code=${inviteCode}`);
     }
   };
 
@@ -264,12 +277,10 @@ export default function Home() {
 
   return (
     <Container>
-      {/* WTF Help Link */}
       <HelpLink href="/wtf">
         ❓ WTF?
       </HelpLink>
 
-      {/* Header with Logo */}
       <Header>
         <Logo>
           warm
@@ -282,36 +293,37 @@ export default function Home() {
         <Tagline>synchronize action · coordinate chaos</Tagline>
       </Header>
       
-      {/* Two Main Action Cards */}
       <Main>
         <ActionGrid>
           <ActionCard>
             <ActionIcon>🐝</ActionIcon>
-            <ActionTitle>JOIN Swarm</ActionTitle>
+            <ActionTitle>join a swarm</ActionTitle>
             <ActionDescription>
-              Have an invite code?<br/>
-              Enter and experience live
+              enter a swarm code
             </ActionDescription>
-            <CodeInput
-              type="text"
-              value={inviteCode}
-              onChange={handleCodeChange}
-              onKeyPress={handleKeyPress}
-              placeholder="ABCD"
-              maxLength={4}
-              autoComplete="off"
-            />
-            <JoinButton 
-              onClick={handleJoinClick}
-              disabled={inviteCode.length !== 4}
-            >
-              Join Now →
-            </JoinButton>
+            <CodeInputWrapper>
+              <CodeInput
+                type="text"
+                value={inviteCode}
+                onChange={handleCodeChange}
+                onKeyPress={handleKeyPress}
+                placeholder="ABCD"
+                maxLength={4}
+                autoComplete="off"
+              />
+              <SubmitArrow
+                type="button"
+                onClick={handleJoinClick}
+                disabled={inviteCode.length !== 4}
+              >
+                →
+              </SubmitArrow>
+            </CodeInputWrapper>
           </ActionCard>
           
           <LinkCard href="/create/catalogue">
-            <ActionIcon>🎨</ActionIcon>
-            <ActionTitle>ORGANIZE a Swarm</ActionTitle>
+            <ActionIcon>📋</ActionIcon>
+            <ActionTitle>organize a swarm</ActionTitle>
             <ActionDescription>
               Start a new swarm<br/>
               Choose template & share
@@ -319,13 +331,14 @@ export default function Home() {
           </LinkCard>
         </ActionGrid>
         
-        {/* Advanced Builder Link */}
         <SecondaryAction>
           <SecondaryLink href="/create/constellation">
-            🔧 Advanced Builder →
+            <span>🔧 Advanced Builder</span>
+            <span style={{ fontSize: '1.3rem', fontWeight: '900' }}>→</span>
           </SecondaryLink>
         </SecondaryAction>
       </Main>
     </Container>
   );
 }
+
