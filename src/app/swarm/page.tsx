@@ -530,6 +530,7 @@ export default function SwarmPage() {
   // Removed Control Room - only using Live Swarm chat now
   const [nickname, setNickname] = useState('');
   const [selectedRole, setSelectedRole] = useState('receiver-1');
+  const [roleInput, setRoleInput] = useState('receiver-1'); // Needed for join modal
   const [showNicknameModal, setShowNicknameModal] = useState(true);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const [liveMessageInput, setLiveMessageInput] = useState('');

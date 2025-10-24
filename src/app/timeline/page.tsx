@@ -318,10 +318,11 @@ export default function TimelineDemo() {
                   {action.data.content}
                 </div>
               )}
-              rowHeight={50}
+              rowHeight={60}
               style={{
                 width: '100%',
-                height: '240px',
+                height: '280px',
+                touchAction: 'none', // Better touch handling
               }}
             />
             <style jsx global>{`
@@ -345,7 +346,7 @@ export default function TimelineDemo() {
         ) : (
           <div style={{ 
             width: '100%', 
-            height: '240px', 
+            height: '280px', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
@@ -356,15 +357,15 @@ export default function TimelineDemo() {
           </div>
         )}
 
-        <div style={{ marginTop: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
-          <strong>Instructions:</strong>
-          <ul style={{ marginTop: '10px', paddingLeft: '20px', lineHeight: '1.6' }}>
-            <li><strong>Add events:</strong> Click any button above to add an event (all events start on the top track)</li>
-            <li><strong>Move between tracks:</strong> Drag events up/down to move them to different tracks</li>
-            <li><strong>Adjust timing:</strong> Drag events left/right to change when they happen</li>
-            <li><strong>Resize duration:</strong> Drag the edges to change how long events last</li>
-            <li><strong>Track colors:</strong> Everyone (blue), Group A (pink), Group B (purple), Solo (green)</li>
-            <li><strong>Event types:</strong> 🎵 Audio, 📝 Text, 🎬 Video, 🗣️ TTS</li>
+        <div style={{ marginTop: '20px', padding: '20px', background: 'white', border: '2px solid #667eea', borderRadius: '12px' }}>
+          <strong style={{ fontSize: '1.1rem', color: '#333' }}>📱 How to Use:</strong>
+          <ul style={{ marginTop: '12px', paddingLeft: '20px', lineHeight: '1.8', color: '#333' }}>
+            <li><strong style={{ color: '#667eea' }}>Add events:</strong> Click any button above to add (starts on top track)</li>
+            <li><strong style={{ color: '#f093fb' }}>Desktop - Move between tracks:</strong> Click and drag events up/down</li>
+            <li><strong style={{ color: '#764ba2' }}>Desktop - Adjust timing:</strong> Click and drag events left/right</li>
+            <li><strong style={{ color: '#2ecc71' }}>Desktop - Resize:</strong> Click and drag the edges</li>
+            <li style={{ marginTop: '10px', fontSize: '1.05rem' }}><strong style={{ color: '#e74c3c' }}>📱 Mobile Note:</strong> Timeline library has limited touch support. For best experience, use on desktop. Mobile gestures may not work reliably for dragging between tracks.</li>
+            <li style={{ marginTop: '8px' }}><strong>Track colors:</strong> Everyone (blue) • Group A (pink) • Group B (purple) • Solo (green)</li>
           </ul>
         </div>
       </TimelineContainer>
