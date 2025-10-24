@@ -169,7 +169,15 @@ const MessageTime = styled.div`
 
 const InputArea = styled.form`
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  
+  @media (max-width: 768px) {
+    padding: 12px 15px;
+    gap: 10px;
+  }
 `;
 
 const MessageInput = styled.input`
