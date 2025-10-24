@@ -561,6 +561,24 @@ const RoleSelect = styled.select`
     background: #2c2c2c;
     color: white;
   }
+  
+  /* Responsive width for sender target audience dropdown */
+  &.target-audience {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    
+    @media (max-width: 768px) {
+      width: 90px;
+      min-width: 90px;
+      max-width: 90px;
+      font-size: 0.85rem;
+      padding: 8px 8px;
+      padding-right: 26px;
+    }
+  }
 `;
 
 const ModalSelect = styled.select`
@@ -1014,10 +1032,10 @@ export default function SwarmPage() {
                 {selectedRole === 'sender' && (
                   <InputArea onSubmit={handleSendLiveMessage}>
                     <RoleSelect
+                      className="target-audience"
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
                       disabled={!socket}
-                      style={{ width: '140px', minWidth: '140px', maxWidth: '140px', flexShrink: 0, flexGrow: 0 }}
                     >
                       <option value="all">All</option>
                       <option value="even">Even</option>
