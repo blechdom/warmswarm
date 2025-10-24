@@ -669,11 +669,6 @@ export default function SwarmPage() {
     <Container>
       <MainMenu />
       
-      <Header>
-        <Logo>🐝 Swarm</Logo>
-        <Tagline>Live coordination space</Tagline>
-      </Header>
-      
       <Main>
         <ContentContainer>
           <TabContent>
@@ -736,6 +731,9 @@ export default function SwarmPage() {
             {/* Only showing Live Swarm chat now */}
             <ChatContainer>
                 <RoleDisplayBar>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Logo style={{ margin: 0 }}>🐝 Swarm</Logo>
+                  </div>
                   <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
                     {selectedRole === 'sender' ? '📡' : '📺'} {selectedRole.replace('-', ' ')}
                   </RoleDisplayText>
@@ -805,15 +803,15 @@ export default function SwarmPage() {
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
                       disabled={!socket}
-                      style={{ width: '140px', flexShrink: 0 }}
+                      style={{ width: '100px', flexShrink: 0 }}
                     >
                       <option value="all">All</option>
-                      <option value="even">Even (2, 4)</option>
-                      <option value="odd">Odd (1, 3)</option>
-                      <option value="1">Receiver 1</option>
-                      <option value="2">Receiver 2</option>
-                      <option value="3">Receiver 3</option>
-                      <option value="4">Receiver 4</option>
+                      <option value="even">Even</option>
+                      <option value="odd">Odd</option>
+                      <option value="1">R1</option>
+                      <option value="2">R2</option>
+                      <option value="3">R3</option>
+                      <option value="4">R4</option>
                     </RoleSelect>
                     <MessageInput
                       type="text"
