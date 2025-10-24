@@ -689,15 +689,76 @@ const FullscreenMessage = styled.div<{ $bgColor: string }>`
 
 const FullscreenText = styled.div`
   color: white;
-  font-size: 4rem;
+  font-size: 6rem;
   font-weight: 900;
   text-align: center;
   text-shadow: 0 4px 20px rgba(0,0,0,0.5);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  word-wrap: break-word;
+  padding: 40px;
   
   @media (max-width: 768px) {
-    font-size: 2.5rem;
+    font-size: 4rem;
+    padding: 30px;
+  }
+`;
+
+const MultiviewGrid = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+`;
+
+const MultiviewCell = styled.div<{ $bgColor: string }>`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.$bgColor};
+  overflow: hidden;
+`;
+
+const MultiviewLabel = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  z-index: 10;
+  
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+`;
+
+const MultiviewText = styled.div`
+  color: white;
+  font-size: 3rem;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  word-wrap: break-word;
+  padding: 20px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    padding: 10px;
   }
 `;
 
@@ -888,18 +949,30 @@ export default function SwarmPage() {
   const [mediaType, setMediaType] = useState('text');
   const [mediaPreset, setMediaPreset] = useState('');
   const [currentFullscreenMessage, setCurrentFullscreenMessage] = useState<{text: string, color: string} | null>(null);
+  const [multiviewMessages, setMultiviewMessages] = useState<{
+    'group-1': {text: string, color: string} | null,
+    'group-2': {text: string, color: string} | null,
+    'group-3': {text: string, color: string} | null,
+    'group-4': {text: string, color: string} | null
+  }>({
+    'group-1': null,
+    'group-2': null,
+    'group-3': null,
+    'group-4': null
+  });
   const liveMessagesEndRef = useRef<HTMLDivElement>(null);
   
   const swarmId = 'default-swarm';
   
-  const availableRoles = ['sender', 'group-1', 'group-2', 'group-3', 'group-4'];
+  const availableRoles = ['sender', 'group-1', 'group-2', 'group-3', 'group-4', 'multiview'];
   const targetOptions = ['all', 'even', 'odd', '1', '2', '3', '4'];
   
   const mediaPresets = {
     text: ['Jump', 'Scream', 'Run', 'Sit'],
+    tts: ['Jump', 'Scream', 'Run', 'Sit'],
+    'text-tts': ['Jump', 'Scream', 'Run', 'Sit'],
     image: ['Preset 1', 'Preset 2', 'Preset 3'],
-    video: ['Loop 1', 'Loop 2', 'Loop 3'],
-    tts: ['Voice 1', 'Voice 2', 'Voice 3']
+    video: ['Loop 1', 'Loop 2', 'Loop 3']
   };
   
   const backgroundColors = [
@@ -941,8 +1014,17 @@ export default function SwarmPage() {
     });
 
     // Listen for fullscreen messages (for groups)
-    newSocket.on('fullscreen-message', (data: { text: string, color: string }) => {
-      setCurrentFullscreenMessage(data);
+    newSocket.on('fullscreen-message', (data: { text: string, color: string, group?: string }) => {
+      if (selectedRole === 'multiview' && data.group) {
+        // Update specific group in multiview
+        setMultiviewMessages(prev => ({
+          ...prev,
+          [data.group as string]: { text: data.text, color: data.color }
+        }));
+      } else {
+        // Update single fullscreen message for individual group view
+        setCurrentFullscreenMessage(data);
+      }
     });
 
     // Listen for live swarm messages (role-based content)
@@ -982,38 +1064,36 @@ export default function SwarmPage() {
 
   const handleSendLiveMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (socket && selectedRole === 'sender') {
-      // Check if we're sending a text preset (fullscreen message)
-      if (mediaType === 'text' && mediaPreset) {
+    if (socket && selectedRole === 'sender' && liveMessageInput.trim()) {
+      const targetDisplay = targetAudience === 'all' ? 'All' : 
+                           targetAudience === 'even' ? 'Even (2,4)' :
+                           targetAudience === 'odd' ? 'Odd (1,3)' :
+                           `Group ${targetAudience}`;
+      
+      // Check if we're sending text/TTS (fullscreen message)
+      if (mediaType === 'text' || mediaType === 'tts' || mediaType === 'text-tts') {
         // Get random background color
         const randomColor = backgroundColors[Math.floor(Math.random() * backgroundColors.length)];
         
-        // Send fullscreen message
+        // Send fullscreen message with text input value
         socket.emit('send-fullscreen-message', {
           swarmId: swarmId,
           target: targetAudience,
-          text: mediaPreset,
+          text: liveMessageInput.trim(),
           color: randomColor
         });
         
         // Add to local messages as confirmation
-        const targetDisplay = targetAudience === 'all' ? 'All' : 
-                             targetAudience === 'even' ? 'Even (2,4)' :
-                             targetAudience === 'odd' ? 'Odd (1,3)' :
-                             `Group ${targetAudience}`;
-        
+        const icon = mediaType === 'text' ? '📝' : mediaType === 'tts' ? '🗣️' : '📝🗣️';
         setLiveMessages(prev => [...prev, {
           nickname: 'You',
-          message: `📝 Sent "${mediaPreset}" to ${targetDisplay}`,
+          message: `${icon} Sent "${liveMessageInput.trim()}" to ${targetDisplay}`,
           timestamp: new Date().toISOString(),
           socketId: currentSocketId,
           role: `→ ${targetDisplay}`
         }]);
-        
-        // Clear preset after sending
-        setMediaPreset('');
-      } else if (liveMessageInput.trim()) {
-        // Regular text message
+      } else {
+        // Regular message for image/video (not implemented yet)
         socket.emit('broadcast-live-message', {
           swarmId: swarmId,
           target: targetAudience,
@@ -1021,11 +1101,6 @@ export default function SwarmPage() {
         });
         
         // Add to local messages as confirmation
-        const targetDisplay = targetAudience === 'all' ? 'All' : 
-                             targetAudience === 'even' ? 'Even (2,4)' :
-                             targetAudience === 'odd' ? 'Odd (1,3)' :
-                             `Group ${targetAudience}`;
-        
         setLiveMessages(prev => [...prev, {
           nickname: 'You',
           message: liveMessageInput.trim(),
@@ -1033,9 +1108,11 @@ export default function SwarmPage() {
           socketId: currentSocketId,
           role: `→ ${targetDisplay}`
         }]);
-        
-        setLiveMessageInput('');
       }
+      
+      // Clear input and preset after sending
+      setLiveMessageInput('');
+      setMediaPreset('');
     }
   };
 
@@ -1096,6 +1173,9 @@ export default function SwarmPage() {
                 </RoleButton>
                 <RoleButton onClick={() => handleRoleSelection('group-4')}>
                   👥 Group 4
+                </RoleButton>
+                <RoleButton onClick={() => handleRoleSelection('multiview')}>
+                  📺 MultiView
                 </RoleButton>
               </RoleButtonGrid>
             </CenteredRoleSelector>
@@ -1215,54 +1295,84 @@ export default function SwarmPage() {
                 )}
 
                 {/* Fullscreen message display for groups */}
-                {selectedRole !== 'sender' && currentFullscreenMessage && (
+                {selectedRole === 'multiview' ? (
+                  <MultiviewGrid>
+                    <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#667eea'}>
+                      <MultiviewLabel>Group 1</MultiviewLabel>
+                      {multiviewMessages['group-1'] && (
+                        <MultiviewText>{multiviewMessages['group-1'].text}</MultiviewText>
+                      )}
+                    </MultiviewCell>
+                    <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#764ba2'}>
+                      <MultiviewLabel>Group 2</MultiviewLabel>
+                      {multiviewMessages['group-2'] && (
+                        <MultiviewText>{multiviewMessages['group-2'].text}</MultiviewText>
+                      )}
+                    </MultiviewCell>
+                    <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#8b5cf6'}>
+                      <MultiviewLabel>Group 3</MultiviewLabel>
+                      {multiviewMessages['group-3'] && (
+                        <MultiviewText>{multiviewMessages['group-3'].text}</MultiviewText>
+                      )}
+                    </MultiviewCell>
+                    <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#d63384'}>
+                      <MultiviewLabel>Group 4</MultiviewLabel>
+                      {multiviewMessages['group-4'] && (
+                        <MultiviewText>{multiviewMessages['group-4'].text}</MultiviewText>
+                      )}
+                    </MultiviewCell>
+                  </MultiviewGrid>
+                ) : selectedRole !== 'sender' && currentFullscreenMessage && (
                   <FullscreenMessage $bgColor={currentFullscreenMessage.color}>
                     <FullscreenText>{currentFullscreenMessage.text}</FullscreenText>
                   </FullscreenMessage>
                 )}
 
-                <LiveMessagesArea>
-                  {liveMessages.length === 0 ? (
-                    <PlaceholderText>
-                      <strong>
-                        {selectedRole === 'sender' ? '📡 Sender Console' : '📺 Receiver Viewer'}
-                      </strong>
-                      {selectedRole === 'sender' ? (
-                        <>
-                          Use the controls below to broadcast messages to specific receivers.
-                          <br /><br />
-                          • Select target audience (All, Even, Odd, or specific receiver)
-                          <br />• Type your message and press Send
-                          <br />• Messages will appear here as confirmation
-                        </>
-                      ) : (
-                        <>
-                          Waiting for messages from the sender...
-                          <br /><br />
-                          You will receive:
-                          <br />• Messages sent to All
-                          <br />• Messages sent to your specific receiver number
-                          <br />• Messages sent to Even/Odd groups (if applicable)
-                        </>
-                      )}
-                    </PlaceholderText>
-                  ) : (
-                    <>
-                      {liveMessages.map((msg, index) => (
-                        msg.socketId === 'system' ? (
-                          <SystemMessage key={index}>{msg.message}</SystemMessage>
+                {/* Hide chat messages for multiview */}
+                {selectedRole !== 'multiview' && (
+                  <LiveMessagesArea>
+                    {liveMessages.length === 0 ? (
+                      <PlaceholderText>
+                        <strong>
+                          {selectedRole === 'sender' ? '📡 Sender Console' : '📺 Receiver Viewer'}
+                        </strong>
+                        {selectedRole === 'sender' ? (
+                          <>
+                            Use the controls below to broadcast messages to specific receivers.
+                            <br /><br />
+                            • Select target audience (All, Even, Odd, or specific receiver)
+                            <br />• Type your message and press Send
+                            <br />• Messages will appear here as confirmation
+                          </>
                         ) : (
-                          <LiveMessage key={index}>
-                            <LiveMessageRole>{msg.role || selectedRole}</LiveMessageRole>
-                            <LiveMessageContent>{msg.message}</LiveMessageContent>
-                            <LiveMessageTime>{formatTime(msg.timestamp)}</LiveMessageTime>
-                          </LiveMessage>
-                        )
-                      ))}
-                      <div ref={liveMessagesEndRef} />
-                    </>
-                  )}
-                </LiveMessagesArea>
+                          <>
+                            Waiting for messages from the sender...
+                            <br /><br />
+                            You will receive:
+                            <br />• Messages sent to All
+                            <br />• Messages sent to your specific receiver number
+                            <br />• Messages sent to Even/Odd groups (if applicable)
+                          </>
+                        )}
+                      </PlaceholderText>
+                    ) : (
+                      <>
+                        {liveMessages.map((msg, index) => (
+                          msg.socketId === 'system' ? (
+                            <SystemMessage key={index}>{msg.message}</SystemMessage>
+                          ) : (
+                            <LiveMessage key={index}>
+                              <LiveMessageRole>{msg.role || selectedRole}</LiveMessageRole>
+                              <LiveMessageContent>{msg.message}</LiveMessageContent>
+                              <LiveMessageTime>{formatTime(msg.timestamp)}</LiveMessageTime>
+                            </LiveMessage>
+                          )
+                        ))}
+                        <div ref={liveMessagesEndRef} />
+                      </>
+                    )}
+                  </LiveMessagesArea>
+                )}
                 
                 {selectedRole === 'sender' && (
                   <MediaControlBar>
@@ -1276,15 +1386,23 @@ export default function SwarmPage() {
                       }}
                     >
                       <option value="text">📝 Text</option>
+                      <option value="tts">🗣️ TTS</option>
+                      <option value="text-tts">📝🗣️ Text & TTS</option>
                       <option value="image">🖼️ Image</option>
                       <option value="video">🎬 Video</option>
-                      <option value="tts">🗣️ TTS</option>
                     </MediaTypeSelect>
 
                     {/* Preset dropdown for selected media type */}
                     <MediaTypeSelect
                       value={mediaPreset}
-                      onChange={(e) => setMediaPreset(e.target.value)}
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        setMediaPreset(selected);
+                        // Populate text input with preset value
+                        if (selected && (mediaType === 'text' || mediaType === 'tts' || mediaType === 'text-tts')) {
+                          setLiveMessageInput(selected);
+                        }
+                      }}
                     >
                       <option value="">Select preset...</option>
                       {mediaPresets[mediaType as keyof typeof mediaPresets].map((preset) => (
@@ -1308,8 +1426,8 @@ export default function SwarmPage() {
                       <option value="4">Group 4</option>
                     </RoleSelect>
 
-                    {/* For text or TTS: show input and send button */}
-                    {(mediaType === 'text' || mediaType === 'tts') && (
+                    {/* For text, TTS, or text-tts: show input and send button */}
+                    {(mediaType === 'text' || mediaType === 'tts' || mediaType === 'text-tts') && (
                       <MediaInputWrapper>
                         <MessageInput
                           type="text"
@@ -1323,7 +1441,11 @@ export default function SwarmPage() {
                               }
                             }
                           }}
-                          placeholder={mediaType === 'text' ? 'Type message...' : 'Type TTS message...'}
+                          placeholder={
+                            mediaType === 'text' ? 'Type message...' : 
+                            mediaType === 'tts' ? 'Type TTS message...' : 
+                            'Type message (Text & TTS)...'
+                          }
                           disabled={!socket}
                         />
                         <SmallSendButton

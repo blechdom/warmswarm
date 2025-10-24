@@ -297,6 +297,14 @@ io.on('connection', (socket) => {
     socket.join(roleRoom);
     console.log(`  - Joined role room: ${roleRoom}`);
     
+    // If multiview, join all group rooms to receive all messages
+    if (role === 'multiview') {
+      ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
+        socket.join(`${swarmId}:${groupRole}`);
+        console.log(`  - Joined group room for multiview: ${swarmId}:${groupRole}`);
+      });
+    }
+    
     // Also join "all" room if not already in it
     if (role !== 'all') {
       socket.join(`${swarmId}:all`);
@@ -333,9 +341,24 @@ io.on('connection', (socket) => {
       const oldRoleRoom = `${swarmId}:${user.role}`;
       socket.leave(oldRoleRoom);
       
+      // If leaving multiview, leave all group rooms
+      if (user.role === 'multiview') {
+        ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
+          socket.leave(`${swarmId}:${groupRole}`);
+        });
+      }
+      
       // Join new role room
       const newRoleRoom = `${swarmId}:${role}`;
       socket.join(newRoleRoom);
+      
+      // If joining multiview, join all group rooms
+      if (role === 'multiview') {
+        ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
+          socket.join(`${swarmId}:${groupRole}`);
+          console.log(`  - Joined group room for multiview: ${swarmId}:${groupRole}`);
+        });
+      }
       
       // Also join "all" room if not already in it
       if (role !== 'all') {
@@ -417,7 +440,8 @@ io.on('connection', (socket) => {
         
         io.to(targetRoom).emit('fullscreen-message', {
           text: text,
-          color: color
+          color: color,
+          group: groupRole  // Include group identifier for multiview
         });
       });
       
