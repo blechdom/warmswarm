@@ -526,6 +526,113 @@ const InfoPopupOverlay = styled.div`
   z-index: 999;
 `;
 
+const GroupCountBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.9rem;
+  color: white;
+  font-weight: 600;
+  
+  @media (max-width: 768px) {
+    gap: 12px;
+    padding: 8px 15px;
+    font-size: 0.8rem;
+  }
+`;
+
+const GroupCount = styled.span`
+  color: rgba(255, 255, 255, 0.9);
+  
+  .count {
+    color: #4ade80;
+    font-weight: 700;
+  }
+`;
+
+const MediaControlBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  
+  @media (max-width: 768px) {
+    padding: 10px 15px;
+    gap: 8px;
+  }
+`;
+
+const MediaTypeSelect = styled.select`
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 30px;
+  min-width: 120px;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  option {
+    background: #2c2c2c;
+    color: white;
+  }
+  
+  @media (max-width: 768px) {
+    min-width: 100px;
+    font-size: 0.85rem;
+  }
+`;
+
+const FullscreenMessage = styled.div<{ $bgColor: string }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.$bgColor};
+  padding: 40px;
+  z-index: 100;
+`;
+
+const FullscreenText = styled.div`
+  color: white;
+  font-size: 4rem;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
+`;
+
 const RoleSelect = styled.select`
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.2);
@@ -701,7 +808,7 @@ export default function SwarmPage() {
   // Auto-generate a simple nickname for participants
   const [nickname, setNickname] = useState(() => `Bee${Math.floor(Math.random() * 1000)}`);
   const [selectedRole, setSelectedRole] = useState('');
-  const [roleInput, setRoleInput] = useState('receiver-1');
+  const [roleInput, setRoleInput] = useState('group-1');
   const [targetAudience, setTargetAudience] = useState('all');
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [showInfoPopup, setShowInfoPopup] = useState(false);
@@ -709,12 +816,33 @@ export default function SwarmPage() {
   const [liveMessageInput, setLiveMessageInput] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentSocketId, setCurrentSocketId] = useState('');
+  const [groupCounts, setGroupCounts] = useState({ 'group-1': 0, 'group-2': 0, 'group-3': 0, 'group-4': 0 });
+  const [mediaType, setMediaType] = useState('text');
+  const [mediaPreset, setMediaPreset] = useState('');
+  const [currentFullscreenMessage, setCurrentFullscreenMessage] = useState<{text: string, color: string} | null>(null);
   const liveMessagesEndRef = useRef<HTMLDivElement>(null);
   
   const swarmId = 'default-swarm';
   
-  const availableRoles = ['sender', 'receiver-1', 'receiver-2', 'receiver-3', 'receiver-4'];
+  const availableRoles = ['sender', 'group-1', 'group-2', 'group-3', 'group-4'];
   const targetOptions = ['all', 'even', 'odd', '1', '2', '3', '4'];
+  
+  const mediaPresets = {
+    text: ['Jump', 'Scream', 'Run', 'Sit'],
+    image: ['Preset 1', 'Preset 2', 'Preset 3'],
+    video: ['Loop 1', 'Loop 2', 'Loop 3'],
+    tts: ['Voice 1', 'Voice 2', 'Voice 3']
+  };
+  
+  const backgroundColors = [
+    '#d63384', // pink
+    '#dc2626', // red
+    '#f59e0b', // orange
+    '#10b981', // green
+    '#3b82f6', // blue
+    '#8b5cf6', // purple (but lighter than main)
+    '#ec4899', // hot pink
+  ];
 
   // Removed localStorage check - popup will show on every page load for easier testing
 
@@ -867,17 +995,17 @@ export default function SwarmPage() {
                 <RoleButton onClick={() => handleRoleSelection('sender')}>
                   📡 Sender
                 </RoleButton>
-                <RoleButton onClick={() => handleRoleSelection('receiver-1')}>
-                  📺 Receiver 1
+                <RoleButton onClick={() => handleRoleSelection('group-1')}>
+                  👥 Group 1
                 </RoleButton>
-                <RoleButton onClick={() => handleRoleSelection('receiver-2')}>
-                  📺 Receiver 2
+                <RoleButton onClick={() => handleRoleSelection('group-2')}>
+                  👥 Group 2
                 </RoleButton>
-                <RoleButton onClick={() => handleRoleSelection('receiver-3')}>
-                  📺 Receiver 3
+                <RoleButton onClick={() => handleRoleSelection('group-3')}>
+                  👥 Group 3
                 </RoleButton>
-                <RoleButton onClick={() => handleRoleSelection('receiver-4')}>
-                  📺 Receiver 4
+                <RoleButton onClick={() => handleRoleSelection('group-4')}>
+                  👥 Group 4
                 </RoleButton>
               </RoleButtonGrid>
             </CenteredRoleSelector>
@@ -961,10 +1089,10 @@ export default function SwarmPage() {
                       disabled={!socket}
                     >
                       <option value="sender">Sender</option>
-                      <option value="receiver-1">Receiver 1</option>
-                      <option value="receiver-2">Receiver 2</option>
-                      <option value="receiver-3">Receiver 3</option>
-                      <option value="receiver-4">Receiver 4</option>
+                      <option value="group-1">Group 1</option>
+                      <option value="group-2">Group 2</option>
+                      <option value="group-3">Group 3</option>
+                      <option value="group-4">Group 4</option>
                     </RoleSelect>
                     <InfoIcon onClick={() => setShowInfoPopup(!showInfoPopup)}>
                       ℹ️
@@ -974,17 +1102,34 @@ export default function SwarmPage() {
                         <InfoPopupOverlay onClick={() => setShowInfoPopup(false)} />
                         <InfoPopup>
                           <h3>About Roles</h3>
-                          <p><strong>Sender:</strong> Send messages to specific receivers or groups</p>
-                          <p><strong>Receivers:</strong> Receive and view messages from the sender</p>
+                          <p><strong>Sender:</strong> Send media to specific groups</p>
+                          <p><strong>Groups:</strong> Receive and view messages from the sender</p>
                           <ul>
-                            <li>Receiver 1-4: Individual channels</li>
-                            <li>Sender can broadcast to all, even/odd, or specific receivers</li>
+                            <li>Group 1-4: Individual channels</li>
+                            <li>Sender can broadcast to all, even/odd, or specific groups</li>
                           </ul>
                         </InfoPopup>
                       </>
                     )}
                   </div>
                 </RoleDisplayBar>
+
+                {/* Group Count Bar - shows how many people in each group */}
+                {selectedRole === 'sender' && (
+                  <GroupCountBar>
+                    <GroupCount>Group1: <span className="count">({groupCounts['group-1']})</span></GroupCount>
+                    <GroupCount>Group2: <span className="count">({groupCounts['group-2']})</span></GroupCount>
+                    <GroupCount>Group3: <span className="count">({groupCounts['group-3']})</span></GroupCount>
+                    <GroupCount>Group4: <span className="count">({groupCounts['group-4']})</span></GroupCount>
+                  </GroupCountBar>
+                )}
+
+                {/* Fullscreen message display for groups */}
+                {selectedRole !== 'sender' && currentFullscreenMessage && (
+                  <FullscreenMessage $bgColor={currentFullscreenMessage.color}>
+                    <FullscreenText>{currentFullscreenMessage.text}</FullscreenText>
+                  </FullscreenMessage>
+                )}
 
                 <LiveMessagesArea>
                   {liveMessages.length === 0 ? (
@@ -1030,7 +1175,31 @@ export default function SwarmPage() {
                 </LiveMessagesArea>
                 
                 {selectedRole === 'sender' && (
-                  <InputArea onSubmit={handleSendLiveMessage}>
+                  <>
+                    <MediaControlBar>
+                      <MediaTypeSelect
+                        value={mediaType}
+                        onChange={(e) => {
+                          setMediaType(e.target.value);
+                          setMediaPreset(''); // Reset preset when changing type
+                        }}
+                      >
+                        <option value="text">📝 Text</option>
+                        <option value="image">🖼️ Image</option>
+                        <option value="video">🎬 Video</option>
+                        <option value="tts">🗣️ TTS</option>
+                      </MediaTypeSelect>
+                      <MediaTypeSelect
+                        value={mediaPreset}
+                        onChange={(e) => setMediaPreset(e.target.value)}
+                      >
+                        <option value="">Select preset...</option>
+                        {mediaPresets[mediaType as keyof typeof mediaPresets].map((preset) => (
+                          <option key={preset} value={preset}>{preset}</option>
+                        ))}
+                      </MediaTypeSelect>
+                    </MediaControlBar>
+                    <InputArea onSubmit={handleSendLiveMessage}>
                     <RoleSelect
                       className="target-audience"
                       value={targetAudience}
@@ -1057,6 +1226,7 @@ export default function SwarmPage() {
                       ✈️
                     </SendButton>
                   </InputArea>
+                  </>
                 )}
               </ChatContainer>
             </TabContent>
@@ -1073,10 +1243,10 @@ export default function SwarmPage() {
               onChange={(e) => setRoleInput(e.target.value)}
               autoFocus
             >
-              <option value="receiver-1">Receiver 1</option>
-              <option value="receiver-2">Receiver 2</option>
-              <option value="receiver-3">Receiver 3</option>
-              <option value="receiver-4">Receiver 4</option>
+              <option value="group-1">Group 1</option>
+              <option value="group-2">Group 2</option>
+              <option value="group-3">Group 3</option>
+              <option value="group-4">Group 4</option>
               <option value="sender">Sender</option>
             </ModalSelect>
             <ModalButton onClick={handleNicknameSubmit}>
