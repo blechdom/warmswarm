@@ -251,7 +251,31 @@ app.use((err, req, res, next) => {
 // WebRTC Signaling
 const swarmSessions = new Map(); // swarmId -> Set of socketIds
 const socketToSwarm = new Map(); // socketId -> swarmId
-const socketToUser = new Map(); // socketId -> { nickname, swarmId }
+const socketToUser = new Map(); // socketId -> { nickname, swarmId, role }
+
+// Helper function to get group counts for a swarm
+function getGroupCounts(swarmId) {
+  const counts = { 'group-1': 0, 'group-2': 0, 'group-3': 0, 'group-4': 0 };
+  
+  if (swarmSessions.has(swarmId)) {
+    swarmSessions.get(swarmId).forEach(socketId => {
+      const user = socketToUser.get(socketId);
+      if (user && user.role && user.role.startsWith('group-')) {
+        counts[user.role] = (counts[user.role] || 0) + 1;
+      }
+    });
+  }
+  
+  return counts;
+}
+
+// Helper function to emit group counts to all senders in a swarm
+function emitGroupCounts(swarmId) {
+  const counts = getGroupCounts(swarmId);
+  const senderRoom = `${swarmId}:sender`;
+  io.to(senderRoom).emit('group-counts', counts);
+  console.log(`[GROUP COUNTS] ${swarmId}:`, counts);
+}
 
 io.on('connection', (socket) => {
   console.log('✅ Client connected:', socket.id, '| Transport:', socket.conn.transport.name);
@@ -287,9 +311,6 @@ io.on('connection', (socket) => {
     }
     swarmSessions.get(swarmId).add(socket.id);
     
-    // Notify others in the swarm
-    socket.to(swarmId).emit('user-joined', { nickname, socketId: socket.id, role });
-    
     // Send current participants to the new user
     const participants = Array.from(swarmSessions.get(swarmId))
       .filter(id => id !== socket.id)
@@ -299,6 +320,9 @@ io.on('connection', (socket) => {
       });
     
     socket.emit('swarm-participants', participants);
+    
+    // Emit updated group counts to all senders
+    emitGroupCounts(swarmId);
   });
 
   // Change role
@@ -323,10 +347,13 @@ io.on('connection', (socket) => {
       socketToUser.set(socket.id, user);
       
       console.log(`${user.nickname} changed role to ${role} in swarm ${swarmId}`);
+      
+      // Emit updated group counts to all senders
+      emitGroupCounts(swarmId);
     }
   });
 
-  // Broadcast live message (from sender) to specific receivers
+  // Broadcast live message (from sender) to specific groups
   socket.on('broadcast-live-message', ({ swarmId, target, message, contentType = 'text' }) => {
     const user = socketToUser.get(socket.id);
     if (user && swarmId && user.role === 'sender') {
@@ -334,33 +361,67 @@ io.on('connection', (socket) => {
       
       // Determine target rooms based on selection
       if (target === 'all') {
-        targetRooms = ['receiver-1', 'receiver-2', 'receiver-3', 'receiver-4'];
+        targetRooms = ['group-1', 'group-2', 'group-3', 'group-4'];
       } else if (target === 'even') {
-        targetRooms = ['receiver-2', 'receiver-4'];
+        targetRooms = ['group-2', 'group-4'];
       } else if (target === 'odd') {
-        targetRooms = ['receiver-1', 'receiver-3'];
+        targetRooms = ['group-1', 'group-3'];
       } else if (['1', '2', '3', '4'].includes(target)) {
-        targetRooms = [`receiver-${target}`];
+        targetRooms = [`group-${target}`];
       }
       
       // Broadcast to each target room
-      targetRooms.forEach(receiverRole => {
-        const targetRoom = `${swarmId}:${receiverRole}`;
+      targetRooms.forEach(groupRole => {
+        const targetRoom = `${swarmId}:${groupRole}`;
         const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
-        const numReceivers = roomSockets ? roomSockets.size : 0;
-        console.log(`  [BROADCAST] Sending to room: ${targetRoom} (${numReceivers} clients)`);
+        const numMembers = roomSockets ? roomSockets.size : 0;
+        console.log(`  [BROADCAST] Sending to room: ${targetRoom} (${numMembers} clients)`);
         
         io.to(targetRoom).emit('live-message', {
           nickname: user.nickname,
           message: message,
           timestamp: new Date().toISOString(),
           socketId: socket.id,
-          role: receiverRole,
+          role: groupRole,
           contentType: contentType
         });
       });
       
       console.log(`[LIVE MSG] Sender ${user.nickname} broadcasting to ${target}: "${message}"`);
+    }
+  });
+
+  // Send fullscreen message to specific groups
+  socket.on('send-fullscreen-message', ({ swarmId, target, text, color }) => {
+    const user = socketToUser.get(socket.id);
+    if (user && swarmId && user.role === 'sender') {
+      let targetRooms = [];
+      
+      // Determine target rooms based on selection
+      if (target === 'all') {
+        targetRooms = ['group-1', 'group-2', 'group-3', 'group-4'];
+      } else if (target === 'even') {
+        targetRooms = ['group-2', 'group-4'];
+      } else if (target === 'odd') {
+        targetRooms = ['group-1', 'group-3'];
+      } else if (['1', '2', '3', '4'].includes(target)) {
+        targetRooms = [`group-${target}`];
+      }
+      
+      // Broadcast fullscreen message to each target room
+      targetRooms.forEach(groupRole => {
+        const targetRoom = `${swarmId}:${groupRole}`;
+        const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
+        const numMembers = roomSockets ? roomSockets.size : 0;
+        console.log(`  [FULLSCREEN] Sending to room: ${targetRoom} (${numMembers} clients)`);
+        
+        io.to(targetRoom).emit('fullscreen-message', {
+          text: text,
+          color: color
+        });
+      });
+      
+      console.log(`[FULLSCREEN] Sender ${user.nickname} sent "${text}" to ${target} with color ${color}`);
     }
   });
 
@@ -439,13 +500,10 @@ io.on('connection', (socket) => {
       swarmSessions.get(swarmId).delete(socket.id);
       if (swarmSessions.get(swarmId).size === 0) {
         swarmSessions.delete(swarmId);
+      } else {
+        // Emit updated group counts to all senders if swarm still has users
+        emitGroupCounts(swarmId);
       }
-      
-      // Notify others in the swarm
-      socket.to(swarmId).emit('user-left', { 
-        nickname: user?.nickname, 
-        socketId: socket.id 
-      });
     }
     
     socketToSwarm.delete(socket.id);
