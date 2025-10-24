@@ -289,6 +289,42 @@ export default function TimelineDemo() {
 
         {mounted ? (
           <div style={{ position: 'relative' }}>
+            {/* Track Labels - Compact */}
+            <div style={{
+              position: 'absolute',
+              left: '2px',
+              top: '39px',
+              width: '65px',
+              height: '240px',
+              pointerEvents: 'none',
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              {trackConfig.map((track, index) => (
+                <div
+                  key={track.id}
+                  style={{
+                    height: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    borderRight: '1px solid #ddd',
+                    borderBottom: '1px solid #eee',
+                    fontWeight: '700',
+                    fontSize: '0.65rem',
+                    color: track.color,
+                    textAlign: 'center',
+                    lineHeight: '1.1',
+                  }}
+                >
+                  {track.name}
+                </div>
+              ))}
+            </div>
+            
             <Timeline
               scale={30}
               scaleWidth={160}
@@ -364,14 +400,13 @@ export default function TimelineDemo() {
         )}
 
         <div style={{ marginTop: '20px', padding: '20px', background: 'white', border: '2px solid #667eea', borderRadius: '12px' }}>
-          <strong style={{ fontSize: '1.1rem', color: '#333' }}>🖱️ How to Use (Desktop):</strong>
-          <ul style={{ marginTop: '12px', paddingLeft: '20px', lineHeight: '1.8', color: '#333' }}>
-            <li><strong style={{ color: '#667eea' }}>Add events:</strong> Click any button above (starts on top track)</li>
-            <li><strong style={{ color: '#f093fb' }}>Move between tracks:</strong> Click and hold on an event, then drag UP or DOWN to move it to a different track. The event will snap to the track you drag it to.</li>
-            <li><strong style={{ color: '#764ba2' }}>Adjust timing:</strong> Click and drag events LEFT/RIGHT horizontally to change when they happen</li>
-            <li><strong style={{ color: '#2ecc71' }}>Resize duration:</strong> Click and drag the LEFT or RIGHT edge of an event to make it longer or shorter</li>
-            <li style={{ marginTop: '10px', fontSize: '1.05rem' }}><strong style={{ color: '#e74c3c' }}>📱 Mobile Note:</strong> Touch gestures have limited support. You can tap to add events and try dragging, but cross-track dragging may not work reliably. Desktop recommended for best experience.</li>
-            <li style={{ marginTop: '8px' }}><strong>Track colors:</strong> Everyone (blue) • Group A (pink) • Group B (purple) • Solo (green)</li>
+          <strong style={{ fontSize: '1.1rem', color: '#333' }}>🖱️ How to Use:</strong>
+          <ul style={{ marginTop: '12px', paddingLeft: '20px', lineHeight: '1.6', color: '#333' }}>
+            <li><strong style={{ color: '#667eea' }}>Add events:</strong> Click "Add Event" above to add to top track</li>
+            <li><strong style={{ color: '#2ecc71' }}>Move timing:</strong> Drag events left/right to change when they happen</li>
+            <li><strong style={{ color: '#9b59b6' }}>Resize:</strong> Drag the edges to make events longer/shorter</li>
+            <li><strong style={{ color: '#3498db' }}>Drag guide:</strong> Red line shows where events will snap</li>
+            <li style={{ marginTop: '8px', fontSize: '0.9rem', color: '#666' }}><strong>Note:</strong> Track labels on left show which track is which (Everyone/Group A/Group B/Solo)</li>
           </ul>
         </div>
       </TimelineContainer>
