@@ -184,11 +184,13 @@ const MessageInput = styled.input`
   flex: 1;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 25px;
-  padding: 12px 20px;
+  border-radius: 8px;
+  padding: 10px 16px;
   color: white;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-family: inherit;
+  height: 42px;
+  box-sizing: border-box;
   
   &::placeholder {
     color: rgba(255, 255, 255, 0.6);
@@ -198,6 +200,11 @@ const MessageInput = styled.input`
     outline: none;
     background: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
 
@@ -600,20 +607,22 @@ const SmallSendButton = styled.button`
   background: rgba(102, 126, 234, 0.8);
   color: white;
   border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  border-radius: 8px;
+  min-width: 50px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  padding: 0 15px;
   
   &:hover:not(:disabled) {
     background: rgba(102, 126, 234, 1);
-    transform: scale(1.1);
+    transform: translateX(2px);
   }
   
   &:disabled {
@@ -1272,20 +1281,31 @@ export default function SwarmPage() {
                       <option value="tts">🗣️ TTS</option>
                     </MediaTypeSelect>
 
-                    {/* Routing dropdown (moved next to media type) */}
+                    {/* Preset dropdown for selected media type */}
+                    <MediaTypeSelect
+                      value={mediaPreset}
+                      onChange={(e) => setMediaPreset(e.target.value)}
+                    >
+                      <option value="">Select preset...</option>
+                      {mediaPresets[mediaType as keyof typeof mediaPresets].map((preset) => (
+                        <option key={preset} value={preset}>{preset}</option>
+                      ))}
+                    </MediaTypeSelect>
+
+                    {/* Routing dropdown */}
                     <RoleSelect
                       className="target-audience"
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
                       disabled={!socket}
                     >
-                      <option value="all">All</option>
-                      <option value="even">Even</option>
-                      <option value="odd">Odd</option>
-                      <option value="1">G1</option>
-                      <option value="2">G2</option>
-                      <option value="3">G3</option>
-                      <option value="4">G4</option>
+                      <option value="all">All Groups</option>
+                      <option value="even">Even Groups</option>
+                      <option value="odd">Odd Groups</option>
+                      <option value="1">Group 1</option>
+                      <option value="2">Group 2</option>
+                      <option value="3">Group 3</option>
+                      <option value="4">Group 4</option>
                     </RoleSelect>
 
                     {/* For text or TTS: show input and send button */}
@@ -1305,7 +1325,6 @@ export default function SwarmPage() {
                           }}
                           placeholder={mediaType === 'text' ? 'Type message...' : 'Type TTS message...'}
                           disabled={!socket}
-                          style={{ flex: 1 }}
                         />
                         <SmallSendButton
                           type="button"
@@ -1313,7 +1332,7 @@ export default function SwarmPage() {
                           disabled={!socket || !liveMessageInput.trim()}
                           title="Send message"
                         >
-                          ✉️
+                          ➜
                         </SmallSendButton>
                       </MediaInputWrapper>
                     )}
