@@ -402,6 +402,122 @@ const RoleLabel = styled.label`
   white-space: nowrap;
 `;
 
+const CenteredRoleSelector = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 30px;
+  padding: 40px;
+`;
+
+const RoleSelectorTitle = styled.h2`
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+`;
+
+const RoleButtonGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 600px;
+`;
+
+const RoleButton = styled.button`
+  padding: 30px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+  }
+`;
+
+const InfoIcon = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+`;
+
+const InfoPopup = styled.div`
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background: rgba(30, 30, 50, 0.98);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  padding: 20px;
+  max-width: 300px;
+  z-index: 1000;
+  color: white;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  
+  h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+  }
+  
+  p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  ul {
+    margin: 10px 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    
+    li {
+      margin: 5px 0;
+    }
+  }
+`;
+
+const InfoPopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+`;
+
 const RoleSelect = styled.select`
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.2);
@@ -558,10 +674,11 @@ interface ChatMessage {
 export default function SwarmPage() {
   // Auto-generate a simple nickname for participants
   const [nickname, setNickname] = useState(() => `Bee${Math.floor(Math.random() * 1000)}`);
-  const [selectedRole, setSelectedRole] = useState('receiver-1');
+  const [selectedRole, setSelectedRole] = useState('');
   const [roleInput, setRoleInput] = useState('receiver-1');
   const [targetAudience, setTargetAudience] = useState('all');
-  const [showNicknameModal, setShowNicknameModal] = useState(false); // No modal for participants
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const [liveMessageInput, setLiveMessageInput] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -686,8 +803,21 @@ export default function SwarmPage() {
     scrollLiveToBottom();
   }, [liveMessages]);
 
+  // Cleanup socket on unmount
+  useEffect(() => {
+    return () => {
+      if (socket) {
+        socket.close();
+      }
+    };
+  }, [socket]);
+
+  const handleRoleSelection = (role: string) => {
+    setSelectedRole(role);
+    connectToSwarm(nickname, role);
+  };
+
   const handleNicknameSubmit = () => {
-    // Use role as the nickname (no localStorage)
     setNickname(roleInput);
     setSelectedRole(roleInput);
     setShowNicknameModal(false);
@@ -703,9 +833,33 @@ export default function SwarmPage() {
     <Container>
       <Main>
         <ContentContainer>
-          <TabContent style={{ padding: 0 }}>
-            {/* Control Room removed - only showing Live Swarm chat */}
-            {false && (
+          {!selectedRole ? (
+            // Show centered role selector when no role selected
+            <CenteredRoleSelector>
+              <RoleSelectorTitle>Select a Role/Group</RoleSelectorTitle>
+              <RoleButtonGrid>
+                <RoleButton onClick={() => handleRoleSelection('sender')}>
+                  📡 Sender
+                </RoleButton>
+                <RoleButton onClick={() => handleRoleSelection('receiver-1')}>
+                  📺 Receiver 1
+                </RoleButton>
+                <RoleButton onClick={() => handleRoleSelection('receiver-2')}>
+                  📺 Receiver 2
+                </RoleButton>
+                <RoleButton onClick={() => handleRoleSelection('receiver-3')}>
+                  📺 Receiver 3
+                </RoleButton>
+                <RoleButton onClick={() => handleRoleSelection('receiver-4')}>
+                  📺 Receiver 4
+                </RoleButton>
+              </RoleButtonGrid>
+            </CenteredRoleSelector>
+          ) : (
+            // Show chat after role is selected
+            <TabContent style={{ padding: 0 }}>
+              {/* Control Room removed - only showing Live Swarm chat */}
+              {false && (
               <ChatContainer>
                 <RoleDisplayBar>
                   <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
@@ -774,7 +928,7 @@ export default function SwarmPage() {
                   <RoleDisplayText>
                     Test Swarm
                   </RoleDisplayText>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
                     <RoleSelect
                       value={selectedRole}
                       onChange={(e) => handleRoleChange(e.target.value)}
@@ -786,6 +940,23 @@ export default function SwarmPage() {
                       <option value="receiver-3">Receiver 3</option>
                       <option value="receiver-4">Receiver 4</option>
                     </RoleSelect>
+                    <InfoIcon onClick={() => setShowInfoPopup(!showInfoPopup)}>
+                      ℹ️
+                    </InfoIcon>
+                    {showInfoPopup && (
+                      <>
+                        <InfoPopupOverlay onClick={() => setShowInfoPopup(false)} />
+                        <InfoPopup>
+                          <h3>About Roles</h3>
+                          <p><strong>Sender:</strong> Send messages to specific receivers or groups</p>
+                          <p><strong>Receivers:</strong> Receive and view messages from the sender</p>
+                          <ul>
+                            <li>Receiver 1-4: Individual channels</li>
+                            <li>Sender can broadcast to all, even/odd, or specific receivers</li>
+                          </ul>
+                        </InfoPopup>
+                      </>
+                    )}
                   </div>
                 </RoleDisplayBar>
 
@@ -862,7 +1033,8 @@ export default function SwarmPage() {
                   </InputArea>
                 )}
               </ChatContainer>
-          </TabContent>
+            </TabContent>
+          )}
         </ContentContainer>
       </Main>
 
