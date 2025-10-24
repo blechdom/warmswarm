@@ -527,19 +527,14 @@ interface ChatMessage {
 }
 
 export default function SwarmPage() {
-  const [activeTab, setActiveTab] = useState<'control' | 'live'>('control');
+  // Removed Control Room - only using Live Swarm chat now
   const [nickname, setNickname] = useState('');
   const [selectedRole, setSelectedRole] = useState('receiver-1');
-  const [targetAudience, setTargetAudience] = useState('all');
   const [showNicknameModal, setShowNicknameModal] = useState(true);
-  const [roleInput, setRoleInput] = useState('receiver-1');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
-  const [messageInput, setMessageInput] = useState('');
   const [liveMessageInput, setLiveMessageInput] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentSocketId, setCurrentSocketId] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const liveMessagesEndRef = useRef<HTMLDivElement>(null);
   
   const swarmId = 'default-swarm'; // For now, use a default swarm
@@ -701,23 +696,9 @@ export default function SwarmPage() {
       
       <Main>
         <ContentContainer>
-          <TabBar>
-            <Tab 
-              $active={activeTab === 'control'} 
-              onClick={() => setActiveTab('control')}
-            >
-              💬 Control Room
-            </Tab>
-            <Tab 
-              $active={activeTab === 'live'} 
-              onClick={() => setActiveTab('live')}
-            >
-              🎭 Live Swarm
-            </Tab>
-          </TabBar>
-          
           <TabContent>
-            {activeTab === 'control' && (
+            {/* Control Room removed - only showing Live Swarm chat */}
+            {false && (
               <ChatContainer>
                 <RoleDisplayBar>
                   <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
@@ -772,8 +753,8 @@ export default function SwarmPage() {
               </ChatContainer>
             )}
             
-            {activeTab === 'live' && (
-              <ChatContainer>
+            {/* Only showing Live Swarm chat now */}
+            <ChatContainer>
                 <RoleDisplayBar>
                   <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
                     {selectedRole === 'sender' ? '📡' : '📺'} {selectedRole.replace('-', ' ')}
@@ -867,7 +848,6 @@ export default function SwarmPage() {
                   </InputArea>
                 )}
               </ChatContainer>
-            )}
           </TabContent>
         </ContentContainer>
       </Main>

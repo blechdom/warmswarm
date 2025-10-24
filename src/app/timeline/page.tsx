@@ -266,25 +266,19 @@ export default function TimelineDemo() {
 
       <TimelineContainer>
         <ControlsSection>
-          {trackConfig.map((track, trackIndex) => (
-            <ControlsRow key={track.id}>
-              <ControlsLabel>{track.name}:</ControlsLabel>
-              {eventTypes.map((eventType) => (
-                <Button
-                  key={`${track.id}-${eventType.type}`}
-                  $variant="primary"
-                  $color={eventType.color}
-                  onClick={() => handleAddEvent(trackIndex, eventType)}
-                >
-                  {eventType.icon} {eventType.label}
-                </Button>
-              ))}
-            </ControlsRow>
-          ))}
-          
-          <ControlsRow style={{ borderTop: '1px solid #ddd', paddingTop: '15px', marginTop: '5px' }}>
-            <ControlsLabel>Actions:</ControlsLabel>
-            <Button $variant="secondary" onClick={handleClearAll}>
+          <ControlsRow>
+            <ControlsLabel>Add Event:</ControlsLabel>
+            {eventTypes.map((eventType) => (
+              <Button
+                key={eventType.type}
+                $variant="primary"
+                $color={eventType.color}
+                onClick={() => handleAddEvent(0, eventType)}
+              >
+                {eventType.icon} {eventType.label}
+              </Button>
+            ))}
+            <Button $variant="secondary" onClick={handleClearAll} style={{ marginLeft: '20px' }}>
               Clear All
             </Button>
             <Button $variant="secondary" onClick={() => console.log('Timeline data:', data)}>
@@ -365,10 +359,11 @@ export default function TimelineDemo() {
         <div style={{ marginTop: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
           <strong>Instructions:</strong>
           <ul style={{ marginTop: '10px', paddingLeft: '20px', lineHeight: '1.6' }}>
-            <li><strong>Add events:</strong> Click any button above to add an event to a specific track</li>
-            <li><strong>Move events:</strong> Drag events left/right to change their timing</li>
-            <li><strong>Resize events:</strong> Drag the edges to change event duration</li>
-            <li><strong>Track colors:</strong> Each track has a different background color (Everyone, Group A, Group B, Solo)</li>
+            <li><strong>Add events:</strong> Click any button above to add an event (all events start on the top track)</li>
+            <li><strong>Move between tracks:</strong> Drag events up/down to move them to different tracks</li>
+            <li><strong>Adjust timing:</strong> Drag events left/right to change when they happen</li>
+            <li><strong>Resize duration:</strong> Drag the edges to change how long events last</li>
+            <li><strong>Track colors:</strong> Everyone (blue), Group A (pink), Group B (purple), Solo (green)</li>
             <li><strong>Event types:</strong> 🎵 Audio, 📝 Text, 🎬 Video, 🗣️ TTS</li>
           </ul>
         </div>
