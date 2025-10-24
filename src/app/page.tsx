@@ -265,7 +265,7 @@ export default function Home() {
 
   const handleJoinClick = () => {
     if (inviteCode.length === 4) {
-      router.push(`/join?code=${inviteCode}`);
+      router.push(`/swarm`);
     }
   };
 
@@ -316,17 +316,16 @@ export default function Home() {
                 onClick={handleJoinClick}
                 disabled={inviteCode.length !== 4}
               >
-                →
+                ➜
               </SubmitArrow>
             </CodeInputWrapper>
           </ActionCard>
           
-          <LinkCard href="/create/catalogue">
+          <LinkCard href="/templates">
             <ActionIcon>📋</ActionIcon>
             <ActionTitle>organize a swarm</ActionTitle>
             <ActionDescription>
-              Start a new swarm<br/>
-              Choose template & share
+              🧩 make it your own
             </ActionDescription>
           </LinkCard>
         </ActionGrid>
@@ -334,7 +333,7 @@ export default function Home() {
         <SecondaryAction>
           <SecondaryLink href="/create/constellation">
             <span>🔧 Advanced Builder</span>
-            <span style={{ fontSize: '1.3rem', fontWeight: '900' }}>→</span>
+            <span style={{ fontSize: '1.3rem', fontWeight: '700' }}>➜</span>
           </SecondaryLink>
         </SecondaryAction>
       </Main>
