@@ -867,24 +867,14 @@ export default function SwarmPage() {
       });
     });
 
-    newSocket.on('user-joined', (data) => {
-      // Add to live messages instead
-      setLiveMessages(prev => [...prev, {
-        nickname: 'System',
-        message: `${data.nickname} joined the swarm`,
-        timestamp: new Date().toISOString(),
-        socketId: 'system'
-      }]);
+    // Update group counts when users join/leave (no more system messages)
+    newSocket.on('group-counts', (counts: { [key: string]: number }) => {
+      setGroupCounts(counts);
     });
 
-    newSocket.on('user-left', (data) => {
-      // Add to live messages instead
-      setLiveMessages(prev => [...prev, {
-        nickname: 'System',
-        message: `${data.nickname} left the swarm`,
-        timestamp: new Date().toISOString(),
-        socketId: 'system'
-      }]);
+    // Listen for fullscreen messages (for groups)
+    newSocket.on('fullscreen-message', (data: { text: string, color: string }) => {
+      setCurrentFullscreenMessage(data);
     });
 
     // Listen for live swarm messages (role-based content)
@@ -924,28 +914,60 @@ export default function SwarmPage() {
 
   const handleSendLiveMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (liveMessageInput.trim() && socket && selectedRole === 'sender') {
-      socket.emit('broadcast-live-message', {
-        swarmId: swarmId,
-        target: targetAudience,
-        message: liveMessageInput.trim()
-      });
-      
-      // Add to local messages as confirmation
-      const targetDisplay = targetAudience === 'all' ? 'All' : 
-                           targetAudience === 'even' ? 'Even (2,4)' :
-                           targetAudience === 'odd' ? 'Odd (1,3)' :
-                           `Receiver ${targetAudience}`;
-      
-      setLiveMessages(prev => [...prev, {
-        nickname: 'You',
-        message: liveMessageInput.trim(),
-        timestamp: new Date().toISOString(),
-        socketId: currentSocketId,
-        role: `→ ${targetDisplay}`
-      }]);
-      
-      setLiveMessageInput('');
+    if (socket && selectedRole === 'sender') {
+      // Check if we're sending a text preset (fullscreen message)
+      if (mediaType === 'text' && mediaPreset) {
+        // Get random background color
+        const randomColor = backgroundColors[Math.floor(Math.random() * backgroundColors.length)];
+        
+        // Send fullscreen message
+        socket.emit('send-fullscreen-message', {
+          swarmId: swarmId,
+          target: targetAudience,
+          text: mediaPreset,
+          color: randomColor
+        });
+        
+        // Add to local messages as confirmation
+        const targetDisplay = targetAudience === 'all' ? 'All' : 
+                             targetAudience === 'even' ? 'Even (2,4)' :
+                             targetAudience === 'odd' ? 'Odd (1,3)' :
+                             `Group ${targetAudience}`;
+        
+        setLiveMessages(prev => [...prev, {
+          nickname: 'You',
+          message: `📝 Sent "${mediaPreset}" to ${targetDisplay}`,
+          timestamp: new Date().toISOString(),
+          socketId: currentSocketId,
+          role: `→ ${targetDisplay}`
+        }]);
+        
+        // Clear preset after sending
+        setMediaPreset('');
+      } else if (liveMessageInput.trim()) {
+        // Regular text message
+        socket.emit('broadcast-live-message', {
+          swarmId: swarmId,
+          target: targetAudience,
+          message: liveMessageInput.trim()
+        });
+        
+        // Add to local messages as confirmation
+        const targetDisplay = targetAudience === 'all' ? 'All' : 
+                             targetAudience === 'even' ? 'Even (2,4)' :
+                             targetAudience === 'odd' ? 'Odd (1,3)' :
+                             `Group ${targetAudience}`;
+        
+        setLiveMessages(prev => [...prev, {
+          nickname: 'You',
+          message: liveMessageInput.trim(),
+          timestamp: new Date().toISOString(),
+          socketId: currentSocketId,
+          role: `→ ${targetDisplay}`
+        }]);
+        
+        setLiveMessageInput('');
+      }
     }
   };
 
