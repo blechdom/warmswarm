@@ -20,6 +20,16 @@ Parameters:
     Type: String
     Description: Existing SSL Certificate ARN (optional)
     Default: ""
+  
+  FrontendImageTag:
+    Type: String
+    Description: Docker image tag for frontend (defaults to latest)
+    Default: "latest"
+  
+  BackendImageTag:
+    Type: String
+    Description: Docker image tag for backend (defaults to latest)
+    Default: "latest"
 
 Conditions:
   CreateNewCertificate: !Equals [!Ref SSLCertificateArn, ""]
@@ -282,7 +292,7 @@ Resources:
       ExecutionRoleArn: !Ref TaskExecutionRole
       ContainerDefinitions:
         - Name: backend
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-backend:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-backend:${BackendImageTag}
           PortMappings:
             - ContainerPort: 4444
               Protocol: tcp
@@ -318,7 +328,7 @@ Resources:
       ExecutionRoleArn: !Ref TaskExecutionRole
       ContainerDefinitions:
         - Name: frontend
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-frontend:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-frontend:${FrontendImageTag}
           PortMappings:
             - ContainerPort: 3333
               Protocol: tcp
