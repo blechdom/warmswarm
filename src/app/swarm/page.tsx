@@ -561,10 +561,69 @@ const MediaControlBar = styled.div`
   padding: 12px 20px;
   background: rgba(0, 0, 0, 0.15);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  flex-wrap: wrap;
   
   @media (max-width: 768px) {
     padding: 10px 15px;
     gap: 8px;
+  }
+`;
+
+const MediaInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 300px;
+  
+  @media (max-width: 768px) {
+    min-width: 200px;
+  }
+`;
+
+const ThumbnailPlaceholder = styled.div`
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 5px;
+`;
+
+const SmallSendButton = styled.button`
+  background: rgba(102, 126, 234, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  &:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 1);
+    transform: scale(1.1);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  &:active:not(:disabled) {
+    transform: scale(0.95);
   }
 `;
 
@@ -1197,31 +1256,23 @@ export default function SwarmPage() {
                 </LiveMessagesArea>
                 
                 {selectedRole === 'sender' && (
-                  <>
-                    <MediaControlBar>
-                      <MediaTypeSelect
-                        value={mediaType}
-                        onChange={(e) => {
-                          setMediaType(e.target.value);
-                          setMediaPreset(''); // Reset preset when changing type
-                        }}
-                      >
-                        <option value="text">📝 Text</option>
-                        <option value="image">🖼️ Image</option>
-                        <option value="video">🎬 Video</option>
-                        <option value="tts">🗣️ TTS</option>
-                      </MediaTypeSelect>
-                      <MediaTypeSelect
-                        value={mediaPreset}
-                        onChange={(e) => setMediaPreset(e.target.value)}
-                      >
-                        <option value="">Select preset...</option>
-                        {mediaPresets[mediaType as keyof typeof mediaPresets].map((preset) => (
-                          <option key={preset} value={preset}>{preset}</option>
-                        ))}
-                      </MediaTypeSelect>
-                    </MediaControlBar>
-                    <InputArea onSubmit={handleSendLiveMessage}>
+                  <MediaControlBar>
+                    {/* Media type dropdown */}
+                    <MediaTypeSelect
+                      value={mediaType}
+                      onChange={(e) => {
+                        setMediaType(e.target.value);
+                        setMediaPreset('');
+                        setLiveMessageInput('');
+                      }}
+                    >
+                      <option value="text">📝 Text</option>
+                      <option value="image">🖼️ Image</option>
+                      <option value="video">🎬 Video</option>
+                      <option value="tts">🗣️ TTS</option>
+                    </MediaTypeSelect>
+
+                    {/* Routing dropdown (moved next to media type) */}
                     <RoleSelect
                       className="target-audience"
                       value={targetAudience}
@@ -1231,24 +1282,49 @@ export default function SwarmPage() {
                       <option value="all">All</option>
                       <option value="even">Even</option>
                       <option value="odd">Odd</option>
-                      <option value="1">R1</option>
-                      <option value="2">R2</option>
-                      <option value="3">R3</option>
-                      <option value="4">R4</option>
+                      <option value="1">G1</option>
+                      <option value="2">G2</option>
+                      <option value="3">G3</option>
+                      <option value="4">G4</option>
                     </RoleSelect>
-                    <MessageInput
-                      type="text"
-                      value={liveMessageInput}
-                      onChange={(e) => setLiveMessageInput(e.target.value)}
-                      placeholder="Type message to send..."
-                      disabled={!socket}
-                      style={{ flex: 1 }}
-                    />
-                    <SendButton type="submit" disabled={!socket || !liveMessageInput.trim()}>
-                      ✈️
-                    </SendButton>
-                  </InputArea>
-                  </>
+
+                    {/* For text or TTS: show input and send button */}
+                    {(mediaType === 'text' || mediaType === 'tts') && (
+                      <MediaInputWrapper>
+                        <MessageInput
+                          type="text"
+                          value={liveMessageInput}
+                          onChange={(e) => setLiveMessageInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              if (liveMessageInput.trim() && socket) {
+                                handleSendLiveMessage(e);
+                              }
+                            }
+                          }}
+                          placeholder={mediaType === 'text' ? 'Type message...' : 'Type TTS message...'}
+                          disabled={!socket}
+                          style={{ flex: 1 }}
+                        />
+                        <SmallSendButton
+                          type="button"
+                          onClick={handleSendLiveMessage}
+                          disabled={!socket || !liveMessageInput.trim()}
+                          title="Send message"
+                        >
+                          ✉️
+                        </SmallSendButton>
+                      </MediaInputWrapper>
+                    )}
+
+                    {/* For image or video: show thumbnail placeholder */}
+                    {(mediaType === 'image' || mediaType === 'video') && (
+                      <ThumbnailPlaceholder>
+                        {mediaType === 'image' ? '🖼️ Image Preview' : '🎬 Video Preview'}
+                      </ThumbnailPlaceholder>
+                    )}
+                  </MediaControlBar>
                 )}
               </ChatContainer>
             </TabContent>
