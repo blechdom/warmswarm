@@ -531,6 +531,7 @@ export default function SwarmPage() {
   const [nickname, setNickname] = useState('');
   const [selectedRole, setSelectedRole] = useState('receiver-1');
   const [roleInput, setRoleInput] = useState('receiver-1'); // Needed for join modal
+  const [targetAudience, setTargetAudience] = useState('all'); // For sender broadcasting
   const [showNicknameModal, setShowNicknameModal] = useState(true);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const [liveMessageInput, setLiveMessageInput] = useState('');
@@ -646,17 +647,9 @@ export default function SwarmPage() {
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const scrollLiveToBottom = () => {
     liveMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     scrollLiveToBottom();
@@ -668,17 +661,6 @@ export default function SwarmPage() {
     setSelectedRole(roleInput);
     setShowNicknameModal(false);
     connectToSwarm(roleInput, roleInput);
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (messageInput.trim() && socket) {
-      socket.emit('chat-message', {
-        swarmId: swarmId,
-        message: messageInput.trim()
-      });
-      setMessageInput('');
-    }
   };
 
   const formatTime = (timestamp: string) => {
