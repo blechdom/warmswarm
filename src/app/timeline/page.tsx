@@ -119,10 +119,10 @@ interface TimelineAction {
 }
 
 const trackConfig = [
-  { id: 'row0', name: 'Everyone', color: '#667eea' },
-  { id: 'row1', name: 'Group A', color: '#f093fb' },
-  { id: 'row2', name: 'Group B', color: '#764ba2' },
-  { id: 'row3', name: 'Solo', color: '#2ecc71' },
+  { id: 'row0', name: 'Receiver 1', color: '#667eea' },
+  { id: 'row1', name: 'Receiver 2', color: '#f093fb' },
+  { id: 'row2', name: 'Receiver 3', color: '#764ba2' },
+  { id: 'row3', name: 'Receiver 4', color: '#2ecc71' },
 ];
 
 const eventTypes = [
@@ -134,6 +134,7 @@ const eventTypes = [
 
 export default function TimelineDemo() {
   const [mounted, setMounted] = useState(false);
+  const [selectedTrack, setSelectedTrack] = useState(0); // Track which row is selected
   const [data, setData] = useState<TimelineRow[]>([
     {
       id: 'row0',
@@ -228,7 +229,7 @@ export default function TimelineDemo() {
     tts: { id: 'tts', name: '🗣️ TTS' },
   };
 
-  const handleAddEvent = (trackIndex: number, eventType: typeof eventTypes[0]) => {
+  const handleAddEvent = (eventType: typeof eventTypes[0]) => {
     const newAction = {
       id: `action-${Date.now()}`,
       start: 10,
@@ -241,9 +242,9 @@ export default function TimelineDemo() {
     };
 
     const updatedData = [...data];
-    updatedData[trackIndex] = {
-      ...updatedData[trackIndex],
-      actions: [...updatedData[trackIndex].actions, newAction],
+    updatedData[selectedTrack] = {
+      ...updatedData[selectedTrack],
+      actions: [...updatedData[selectedTrack].actions, newAction],
     };
     setData(updatedData);
   };
@@ -267,13 +268,37 @@ export default function TimelineDemo() {
       <TimelineContainer>
         <ControlsSection>
           <ControlsRow>
+            <ControlsLabel>Target Track:</ControlsLabel>
+            <select 
+              value={selectedTrack} 
+              onChange={(e) => setSelectedTrack(Number(e.target.value))}
+              style={{
+                padding: '8px 12px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                border: `2px solid ${trackConfig[selectedTrack].color}`,
+                borderRadius: '6px',
+                background: 'white',
+                color: trackConfig[selectedTrack].color,
+                cursor: 'pointer',
+                marginRight: '20px',
+                outline: 'none',
+              }}
+            >
+              {trackConfig.map((track, index) => (
+                <option key={track.id} value={index}>
+                  {track.name}
+                </option>
+              ))}
+            </select>
+            
             <ControlsLabel>Add Event:</ControlsLabel>
             {eventTypes.map((eventType) => (
               <Button
                 key={eventType.type}
                 $variant="primary"
                 $color={eventType.color}
-                onClick={() => handleAddEvent(0, eventType)}
+                onClick={() => handleAddEvent(eventType)}
               >
                 {eventType.icon} {eventType.label}
               </Button>
@@ -289,42 +314,6 @@ export default function TimelineDemo() {
 
         {mounted ? (
           <div style={{ position: 'relative' }}>
-            {/* Track Labels - Compact */}
-            <div style={{
-              position: 'absolute',
-              left: '2px',
-              top: '39px',
-              width: '65px',
-              height: '240px',
-              pointerEvents: 'none',
-              zIndex: 10,
-              display: 'flex',
-              flexDirection: 'column',
-            }}>
-              {trackConfig.map((track, index) => (
-                <div
-                  key={track.id}
-                  style={{
-                    height: '60px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0 4px',
-                    background: 'rgba(255, 255, 255, 0.85)',
-                    borderRight: '1px solid #ddd',
-                    borderBottom: '1px solid #eee',
-                    fontWeight: '700',
-                    fontSize: '0.65rem',
-                    color: track.color,
-                    textAlign: 'center',
-                    lineHeight: '1.1',
-                  }}
-                >
-                  {track.name}
-                </div>
-              ))}
-            </div>
-            
             <Timeline
               scale={30}
               scaleWidth={160}
@@ -369,19 +358,24 @@ export default function TimelineDemo() {
             />
             <style jsx global>{`
               .timeline-editor-edit-row:nth-child(1) {
-                background: rgba(102, 126, 234, 0.08) !important;
+                background: ${selectedTrack === 0 ? 'rgba(102, 126, 234, 0.25)' : 'rgba(102, 126, 234, 0.08)'} !important;
+                border: ${selectedTrack === 0 ? '2px solid #667eea' : 'none'} !important;
               }
               .timeline-editor-edit-row:nth-child(2) {
-                background: rgba(240, 147, 251, 0.08) !important;
+                background: ${selectedTrack === 1 ? 'rgba(240, 147, 251, 0.25)' : 'rgba(240, 147, 251, 0.08)'} !important;
+                border: ${selectedTrack === 1 ? '2px solid #f093fb' : 'none'} !important;
               }
               .timeline-editor-edit-row:nth-child(3) {
-                background: rgba(118, 75, 162, 0.08) !important;
+                background: ${selectedTrack === 2 ? 'rgba(118, 75, 162, 0.25)' : 'rgba(118, 75, 162, 0.08)'} !important;
+                border: ${selectedTrack === 2 ? '2px solid #764ba2' : 'none'} !important;
               }
               .timeline-editor-edit-row:nth-child(4) {
-                background: rgba(46, 204, 113, 0.08) !important;
+                background: ${selectedTrack === 3 ? 'rgba(46, 204, 113, 0.25)' : 'rgba(46, 204, 113, 0.08)'} !important;
+                border: ${selectedTrack === 3 ? '2px solid #2ecc71' : 'none'} !important;
               }
               .timeline-editor-edit-row {
                 border-bottom: 1px solid rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
               }
             `}</style>
           </div>
@@ -402,11 +396,11 @@ export default function TimelineDemo() {
         <div style={{ marginTop: '20px', padding: '20px', background: 'white', border: '2px solid #667eea', borderRadius: '12px' }}>
           <strong style={{ fontSize: '1.1rem', color: '#333' }}>🖱️ How to Use:</strong>
           <ul style={{ marginTop: '12px', paddingLeft: '20px', lineHeight: '1.6', color: '#333' }}>
-            <li><strong style={{ color: '#667eea' }}>Add events:</strong> Click "Add Event" above to add to top track</li>
-            <li><strong style={{ color: '#2ecc71' }}>Move timing:</strong> Drag events left/right to change when they happen</li>
+            <li><strong style={{ color: '#667eea' }}>Select track:</strong> Use the "Target Track" dropdown to choose which receiver (Receiver 1-4) to add events to. The selected track will be highlighted in the timeline.</li>
+            <li><strong style={{ color: '#f093fb' }}>Add events:</strong> Click any event type button (🎵 Audio, 📝 Text, 🎬 Video, 🗣️ TTS) to add it to the currently selected track</li>
+            <li><strong style={{ color: '#2ecc71' }}>Move timing:</strong> Drag events left/right to adjust when they happen</li>
             <li><strong style={{ color: '#9b59b6' }}>Resize:</strong> Drag the edges to make events longer/shorter</li>
-            <li><strong style={{ color: '#3498db' }}>Drag guide:</strong> Red line shows where events will snap</li>
-            <li style={{ marginTop: '8px', fontSize: '0.9rem', color: '#666' }}><strong>Note:</strong> Track labels on left show which track is which (Everyone/Group A/Group B/Solo)</li>
+            <li><strong style={{ color: '#3498db' }}>Visual feedback:</strong> The selected track has a colored border and darker background. Events snap to a guide line when dragging.</li>
           </ul>
         </div>
       </TimelineContainer>
