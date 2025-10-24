@@ -116,68 +116,73 @@ const ActionTitle = styled.h2`
 
 const ActionDescription = styled.p`
   color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-size: 1rem;
-  margin-bottom: 20px;
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
 `;
 
-const PillsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
-`;
-
-const Pill = styled.span`
-  background: rgba(255, 255, 255, 0.2);
+const ActionCTA = styled.div`
   color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.2s ease;
-  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 10px;
   display: inline-block;
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  text-align: left;
   
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+  li {
+    margin: 8px 0;
+    padding-left: 20px;
+    position: relative;
+    
+    &:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: rgba(255, 255, 255, 0.6);
+    }
   }
 `;
 
-const ClickablePill = styled.span`
-  background: rgba(255, 255, 255, 0.2);
+const SecondaryAction = styled.div`
+  text-align: center;
+  margin-top: 30px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+`;
+
+const SecondaryLink = styled(Link)`
   color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.2s ease;
   text-decoration: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   display: inline-block;
-  cursor: pointer;
+  transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
   }
 `;
 
 export default function Home() {
-  const router = useRouter();
-  
-  const handlePillClick = (e: React.MouseEvent, href: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(href);
-  };
-  
   return (
     <Container>
-      {/* Element 1: Header with Logo */}
+      {/* Header with Logo */}
       <Header>
         <Logo>
           warm
@@ -190,57 +195,42 @@ export default function Home() {
         <Tagline>synchronize action · coordinate chaos</Tagline>
       </Header>
       
-      {/* Element 3: Action Cards */}
+      {/* Two Main Action Cards */}
       <Main>
         <ActionGrid>
-          <ActionCard href="/swarm">
+          <ActionCard href="/join">
             <ActionIcon>🐝</ActionIcon>
-            <ActionTitle>swarm</ActionTitle>
-            <ActionDescription>Join a live swarm</ActionDescription>
-            <PillsContainer>
-              <ClickablePill onClick={(e) => handlePillClick(e, '/examples')}>
-                🚀 Try an example swarm
-              </ClickablePill>
-              <ClickablePill onClick={(e) => handlePillClick(e, '/create/catalogue/swarms')}>
-                ⚡ Start a swarm
-              </ClickablePill>
-              <ClickablePill onClick={(e) => handlePillClick(e, '/swarms')}>
-                👥 Join a swarm
-              </ClickablePill>
-            </PillsContainer>
+            <ActionTitle>JOIN</ActionTitle>
+            <ActionDescription>Have an invite code?</ActionDescription>
+            <ActionCTA>Enter Code →</ActionCTA>
+            <FeatureList>
+              <li>Join instantly</li>
+              <li>No account needed</li>
+              <li>Experience live</li>
+            </FeatureList>
           </ActionCard>
           
-          <ActionCard href="/create">
-            <ActionIcon>✨</ActionIcon>
-            <ActionTitle>create</ActionTitle>
-            <ActionDescription>Build and organize content</ActionDescription>
-            <PillsContainer>
-              <ClickablePill onClick={(e) => handlePillClick(e, '/templates')}>
-                📝 Get started with a template
-              </ClickablePill>
-              <Pill>📦 Collect</Pill>
-              <Pill>🎭 Cast</Pill>
-              <ClickablePill onClick={(e) => handlePillClick(e, '/create/constellation')}>
-                🌟 Constellation
-              </ClickablePill>
-              <Pill>🎯 Coordinate</Pill>
-              <Pill>📚 Catalogue</Pill>
-              <Pill>🔗 Connect</Pill>
-            </PillsContainer>
-          </ActionCard>
-          
-          <ActionCard href="/wtf">
-            <ActionIcon>❓</ActionIcon>
-            <ActionTitle>wtf?</ActionTitle>
-            <ActionDescription>How do I get started?</ActionDescription>
-          </ActionCard>
-          
-          <ActionCard href="/about">
-            <ActionIcon>💡</ActionIcon>
-            <ActionTitle>about</ActionTitle>
-            <ActionDescription>Who made this and why?</ActionDescription>
+          <ActionCard href="/create/catalogue">
+            <ActionIcon>🎨</ActionIcon>
+            <ActionTitle>ORGANIZE</ActionTitle>
+            <ActionDescription>Start a new swarm</ActionDescription>
+            <ActionCTA>Get Started →</ActionCTA>
+            <FeatureList>
+              <li>Choose template</li>
+              <li>Get invite code</li>
+              <li>Share with group</li>
+            </FeatureList>
           </ActionCard>
         </ActionGrid>
+        
+        {/* Advanced Builder Link */}
+        <SecondaryAction>
+          Need more control?
+          <br />
+          <SecondaryLink href="/create/constellation">
+            🔧 Advanced Builder →
+          </SecondaryLink>
+        </SecondaryAction>
       </Main>
     </Container>
   );
