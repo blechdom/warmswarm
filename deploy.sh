@@ -32,7 +32,7 @@ aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --
 
 # Step 3: Build and push frontend image
 echo "🏗️ Building and pushing frontend image..."
-docker build -t $PROJECT_NAME-frontend .
+docker build --build-arg NEXT_PUBLIC_API_URL=https://warmswarm.org -t $PROJECT_NAME-frontend .
 docker tag $PROJECT_NAME-frontend:latest $ECR_REGISTRY/$PROJECT_NAME-frontend:$IMAGE_TAG
 docker tag $PROJECT_NAME-frontend:latest $ECR_REGISTRY/$PROJECT_NAME-frontend:latest
 docker push $ECR_REGISTRY/$PROJECT_NAME-frontend:$IMAGE_TAG
