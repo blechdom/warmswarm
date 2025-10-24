@@ -803,7 +803,7 @@ export default function SwarmPage() {
                       value={targetAudience}
                       onChange={(e) => setTargetAudience(e.target.value)}
                       disabled={!socket}
-                      style={{ width: '70px', minWidth: '70px', maxWidth: '70px', flexShrink: 0, flexGrow: 0 }}
+                      style={{ width: '140px', minWidth: '140px', maxWidth: '140px', flexShrink: 0, flexGrow: 0 }}
                     >
                       <option value="all">All</option>
                       <option value="even">Even</option>
