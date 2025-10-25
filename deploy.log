@@ -1,0 +1,286 @@
+🚀 Starting AWS deployment for warmswarm
+AWS Region: us-west-1
+AWS Account: 642815508926
+Image Tag: 407ffbb
+📦 Creating ECR repositories...
+REPOSITORIES	2025-07-30T14:05:36.609000-07:00	MUTABLE	642815508926	arn:aws:ecr:us-west-1:642815508926:repository/warmswarm-frontend	warmswarm-frontend	642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-frontend
+ENCRYPTIONCONFIGURATION	AES256
+IMAGESCANNINGCONFIGURATION	False
+REPOSITORIES	2025-07-30T14:05:38.010000-07:00	MUTABLE	642815508926	arn:aws:ecr:us-west-1:642815508926:repository/warmswarm-backend	warmswarm-backend	642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-backend
+ENCRYPTIONCONFIGURATION	AES256
+IMAGESCANNINGCONFIGURATION	False
+🔑 Logging into ECR...
+
+WARNING! Your credentials are stored unencrypted in '/home/kgalvin/.docker/config.json'.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/go/credential-store/
+
+Login Succeeded
+🏗️ Building and pushing frontend image...
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 416B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:18-alpine
+#2 DONE 0.8s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 218B done
+#3 DONE 0.0s
+
+#4 [1/6] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 220.58kB 0.1s done
+#5 DONE 0.1s
+
+#6 [2/6] WORKDIR /app
+#6 CACHED
+
+#7 [3/6] COPY package*.json ./
+#7 CACHED
+
+#8 [4/6] RUN npm ci --legacy-peer-deps
+#8 CACHED
+
+#9 [5/6] COPY . .
+#9 DONE 0.3s
+
+#10 [6/6] RUN npm run build
+#10 0.415 
+#10 0.415 > warmswarm@0.1.0 build
+#10 0.415 > next build
+#10 0.415 
+#10 1.033 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+#10 1.033 This information is used to shape Next.js' roadmap and prioritize features.
+#10 1.033 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+#10 1.033 https://nextjs.org/telemetry
+#10 1.033 
+#10 1.096    ▲ Next.js 15.4.4
+#10 1.096 
+#10 1.164    Creating an optimized production build ...
+#10 13.80  ✓ Compiled successfully in 9.0s
+#10 13.80    Skipping validation of types
+#10 13.80    Skipping linting
+#10 14.02    Collecting page data ...
+#10 16.02    Generating static pages (0/57) ...
+#10 16.60    Generating static pages (14/57) 
+#10 16.78    Generating static pages (28/57) 
+#10 16.79    Generating static pages (42/57) 
+#10 16.81  ✓ Generating static pages (57/57)
+#10 17.18    Finalizing page optimization ...
+#10 17.18    Collecting build traces ...
+#10 21.50 
+#10 21.50 Route (app)                                 Size  First Load JS
+#10 21.50 ┌ ○ /                                     1.6 kB         115 kB
+#10 21.50 ├ ○ /_not-found                            996 B         101 kB
+#10 21.50 ├ ○ /about                               2.65 kB         116 kB
+#10 21.50 ├ ○ /create                              2.05 kB         116 kB
+#10 21.50 ├ ○ /create/cast                         2.07 kB         116 kB
+#10 21.50 ├ ○ /create/catalogue                    2.11 kB         116 kB
+#10 21.50 ├ ○ /create/catalogue/swarms             3.49 kB         117 kB
+#10 21.50 ├ ○ /create/collect                      1.97 kB         116 kB
+#10 21.50 ├ ○ /create/collect/audio                2.08 kB         116 kB
+#10 21.50 ├ ○ /create/collect/image                 2.1 kB         116 kB
+#10 21.50 ├ ○ /create/connect                      2.05 kB         116 kB
+#10 21.50 ├ ○ /create/constellation                 3.9 kB         118 kB
+#10 21.50 ├ ○ /create/coordinate                      2 kB         116 kB
+#10 21.50 ├ ○ /create/coordinate/sequences         2.08 kB         116 kB
+#10 21.50 ├ ○ /examples                            3.34 kB         117 kB
+#10 21.50 ├ ○ /join                                2.97 kB         117 kB
+#10 21.50 ├ ○ /menu-showcase                       3.68 kB         117 kB
+#10 21.50 ├ ○ /swarm                               6.14 kB         132 kB
+#10 21.50 ├ ○ /swarms                              3.47 kB         117 kB
+#10 21.50 ├ ○ /telebrain                           2.75 kB         116 kB
+#10 21.50 ├ ○ /telebrain-home                      1.79 kB         105 kB
+#10 21.50 ├ ○ /telebrain-perform                   2.62 kB         118 kB
+#10 21.50 ├ ○ /telebrain/about                     2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/audio-image-pairs         2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/audio-sentences           2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/audio-uploads             2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/audio-urls                2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/collections               2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/database                  2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/fragments                 2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/image-phrases             2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/image-uploads             2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/image-urls                2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/instructions              2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/interfaces                2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/login                     2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/metronomes                2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/multiroles                2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/my-brains                 2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/networks                  2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/osc-test                  2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/perform                   2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/performance               2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/programs                  2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/roles                     2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/scheduler                 2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/teleprompts               2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/timed-org                 2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/timers                    2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/tts                       2.42 kB         116 kB
+#10 21.50 ├ ○ /telebrain/tutorial                  2.42 kB         116 kB
+#10 21.50 ├ ○ /templates                            2.9 kB         117 kB
+#10 21.50 ├ ○ /timeline                            6.68 kB         117 kB
+#10 21.50 └ ○ /wtf                                 2.38 kB         116 kB
+#10 21.50 + First Load JS shared by all            99.7 kB
+#10 21.50   ├ chunks/4bd1b696-602635ee57868870.js  54.1 kB
+#10 21.50   ├ chunks/5964-7bb2b019501ffae5.js      43.5 kB
+#10 21.50   └ other shared chunks (total)          2.01 kB
+#10 21.50 
+#10 21.50 
+#10 21.50 ○  (Static)  prerendered as static content
+#10 21.50 
+#10 DONE 21.7s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 0.3s done
+#11 writing image sha256:b9cdeab24c733d15754cb9530b55c5f0cf93d876b7dc6ad7461cc93332611389 done
+#11 naming to docker.io/library/warmswarm-frontend 0.0s done
+#11 DONE 0.3s
+The push refers to repository [642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-frontend]
+f576373cdf10: Preparing
+21c6a9f96d0a: Preparing
+113af06e5799: Preparing
+06dea2d4f06c: Preparing
+fdcabee5cb2a: Preparing
+82140d9a70a7: Preparing
+f3b40b0cdb1c: Preparing
+0b1f26057bd0: Preparing
+08000c18d16d: Preparing
+82140d9a70a7: Waiting
+f3b40b0cdb1c: Waiting
+0b1f26057bd0: Waiting
+08000c18d16d: Waiting
+06dea2d4f06c: Layer already exists
+113af06e5799: Layer already exists
+fdcabee5cb2a: Layer already exists
+82140d9a70a7: Layer already exists
+f3b40b0cdb1c: Layer already exists
+0b1f26057bd0: Layer already exists
+08000c18d16d: Layer already exists
+f576373cdf10: Pushed
+21c6a9f96d0a: Pushed
+407ffbb: digest: sha256:1923b8551d529c3b1ed6d5e57ad09c321186fa960bba5ae81b1d854d5e7d5056 size: 2210
+The push refers to repository [642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-frontend]
+f576373cdf10: Preparing
+21c6a9f96d0a: Preparing
+113af06e5799: Preparing
+06dea2d4f06c: Preparing
+fdcabee5cb2a: Preparing
+82140d9a70a7: Preparing
+f3b40b0cdb1c: Preparing
+0b1f26057bd0: Preparing
+08000c18d16d: Preparing
+82140d9a70a7: Waiting
+f3b40b0cdb1c: Waiting
+0b1f26057bd0: Waiting
+08000c18d16d: Waiting
+113af06e5799: Layer already exists
+fdcabee5cb2a: Layer already exists
+21c6a9f96d0a: Layer already exists
+f576373cdf10: Layer already exists
+06dea2d4f06c: Layer already exists
+f3b40b0cdb1c: Layer already exists
+0b1f26057bd0: Layer already exists
+08000c18d16d: Layer already exists
+82140d9a70a7: Layer already exists
+latest: digest: sha256:1923b8551d529c3b1ed6d5e57ad09c321186fa960bba5ae81b1d854d5e7d5056 size: 2210
+🏗️ Building and pushing backend image...
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 271B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:18-alpine
+#2 DONE 0.4s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/5] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 102.15kB 0.0s done
+#5 DONE 0.1s
+
+#6 [3/5] COPY package*.json ./
+#6 CACHED
+
+#7 [4/5] RUN npm ci --only=production
+#7 CACHED
+
+#8 [2/5] WORKDIR /app
+#8 CACHED
+
+#9 [5/5] COPY . .
+#9 CACHED
+
+#10 exporting to image
+#10 exporting layers done
+#10 writing image sha256:3e2eff4475d4ff1fd2b8d87c80693c7aac932aab17f529ec77d68c33ad280bf3 done
+#10 naming to docker.io/library/warmswarm-backend done
+#10 DONE 0.0s
+The push refers to repository [642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-backend]
+164f75a177ee: Preparing
+06e0a5b49d50: Preparing
+82b499c877ab: Preparing
+fdcabee5cb2a: Preparing
+82140d9a70a7: Preparing
+f3b40b0cdb1c: Preparing
+0b1f26057bd0: Preparing
+08000c18d16d: Preparing
+f3b40b0cdb1c: Waiting
+0b1f26057bd0: Waiting
+08000c18d16d: Waiting
+164f75a177ee: Layer already exists
+82b499c877ab: Layer already exists
+06e0a5b49d50: Layer already exists
+82140d9a70a7: Layer already exists
+fdcabee5cb2a: Layer already exists
+0b1f26057bd0: Layer already exists
+f3b40b0cdb1c: Layer already exists
+08000c18d16d: Layer already exists
+407ffbb: digest: sha256:2059eb26df32c8e05e51b3d6f954b8988c14b20d91f8bc7a9bb170cb63e8a968 size: 1995
+The push refers to repository [642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-backend]
+164f75a177ee: Preparing
+06e0a5b49d50: Preparing
+82b499c877ab: Preparing
+fdcabee5cb2a: Preparing
+82140d9a70a7: Preparing
+f3b40b0cdb1c: Preparing
+0b1f26057bd0: Preparing
+08000c18d16d: Preparing
+f3b40b0cdb1c: Waiting
+0b1f26057bd0: Waiting
+08000c18d16d: Waiting
+06e0a5b49d50: Layer already exists
+82b499c877ab: Layer already exists
+fdcabee5cb2a: Layer already exists
+164f75a177ee: Layer already exists
+82140d9a70a7: Layer already exists
+0b1f26057bd0: Layer already exists
+08000c18d16d: Layer already exists
+f3b40b0cdb1c: Layer already exists
+latest: digest: sha256:2059eb26df32c8e05e51b3d6f954b8988c14b20d91f8bc7a9bb170cb63e8a968 size: 1995
+✅ Docker images pushed successfully!
+Frontend image: 642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-frontend:407ffbb
+Backend image: 642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-backend:407ffbb
+🚀 Deploying to CloudFormation...
+
+Waiting for changeset to be created..
+Waiting for stack create/update to complete
+Successfully created/updated stack - warmswarm-ssl
+✅ Deployment complete!
+Frontend image: 642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-frontend:407ffbb
+Backend image: 642815508926.dkr.ecr.us-west-1.amazonaws.com/warmswarm-backend:407ffbb

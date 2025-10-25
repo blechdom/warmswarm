@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
 import { io, Socket } from 'socket.io-client';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -706,7 +707,7 @@ const FullscreenText = styled.div`
 `;
 
 const MultiviewGrid = styled.div`
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -715,7 +716,7 @@ const MultiviewGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 2px;
-  background: rgba(0, 0, 0, 0.3);
+  background: #000;
   z-index: 100;
 `;
 
@@ -938,6 +939,7 @@ export default function SwarmPage() {
   // Auto-generate a simple nickname for participants
   const [nickname, setNickname] = useState(() => `Bee${Math.floor(Math.random() * 1000)}`);
   const [selectedRole, setSelectedRole] = useState('');
+  const selectedRoleRef = useRef<string>(''); // Ref to always have current role for socket listeners
   const [roleInput, setRoleInput] = useState('group-1');
   const [targetAudience, setTargetAudience] = useState('all');
   const [showNicknameModal, setShowNicknameModal] = useState(false);
@@ -949,7 +951,10 @@ export default function SwarmPage() {
   const [groupCounts, setGroupCounts] = useState({ 'group-1': 0, 'group-2': 0, 'group-3': 0, 'group-4': 0 });
   const [mediaType, setMediaType] = useState('text');
   const [mediaPreset, setMediaPreset] = useState('');
-  const [currentFullscreenMessage, setCurrentFullscreenMessage] = useState<{text: string, color: string} | null>(null);
+  const [currentFullscreenMessage, setCurrentFullscreenMessage] = useState<{text: string, color: string, useTTS?: boolean} | null>(null);
+  
+  // TTS hook - default US English voice
+  const { speak, voices, isSupported } = useTextToSpeech();
   const [multiviewMessages, setMultiviewMessages] = useState<{
     'group-1': {text: string, color: string} | null,
     'group-2': {text: string, color: string} | null,
@@ -971,7 +976,6 @@ export default function SwarmPage() {
   const mediaPresets = {
     text: ['Jump', 'Scream', 'Run', 'Sit'],
     tts: ['Jump', 'Scream', 'Run', 'Sit'],
-    'text-tts': ['Jump', 'Scream', 'Run', 'Sit'],
     image: ['Preset 1', 'Preset 2', 'Preset 3'],
     video: ['Loop 1', 'Loop 2', 'Loop 3']
   };
@@ -1015,7 +1019,17 @@ export default function SwarmPage() {
     });
 
     // Listen for fullscreen messages (for groups)
-    newSocket.on('fullscreen-message', (data: { text: string, color: string, group?: string }) => {
+    newSocket.on('fullscreen-message', (data: { text: string, color: string, group?: string, useTTS?: boolean }) => {
+      const currentRole = selectedRoleRef.current; // Get current role from ref
+      
+      console.log('🔊 Fullscreen message received:', { 
+        text: data.text, 
+        useTTS: data.useTTS, 
+        currentRole, 
+        isSupported,
+        voicesCount: voices.length 
+      });
+      
       // Always update multiview messages if group is specified
       if (data.group) {
         setMultiviewMessages(prev => ({
@@ -1025,6 +1039,24 @@ export default function SwarmPage() {
       }
       // Also update single fullscreen message for individual group view
       setCurrentFullscreenMessage(data);
+      
+      // Auto-play TTS if enabled and on a group (not sender or multiview)
+      if (data.useTTS && isSupported && currentRole.startsWith('group-')) {
+        console.log('✅ TTS conditions met, speaking...');
+        // Use default US English voice
+        const usVoice = voices.find(v => v.lang === 'en-US' && v.localService) || voices[0];
+        console.log('🗣️ Using voice:', usVoice?.name || 'default');
+        speak(data.text, { voice: usVoice }).catch(err => {
+          console.error('❌ TTS error:', err);
+        });
+      } else {
+        console.log('⚠️ TTS not playing:', {
+          hasUseTTS: !!data.useTTS,
+          isSupported,
+          isGroupRole: currentRole.startsWith('group-'),
+          currentRole
+        });
+      }
     });
 
     // Listen for live swarm messages (role-based content)
@@ -1041,6 +1073,7 @@ export default function SwarmPage() {
 
   const handleRoleChange = (newRole: string) => {
     setSelectedRole(newRole);
+    selectedRoleRef.current = newRole; // Update ref immediately for socket listeners
     if (socket) {
       // Notify server of role change
       socket.emit('change-role', {
@@ -1071,23 +1104,30 @@ export default function SwarmPage() {
                            `Group ${targetAudience}`;
       
       // Check if we're sending text/TTS (fullscreen message)
-      if (mediaType === 'text' || mediaType === 'tts' || mediaType === 'text-tts') {
+      if (mediaType === 'text' || mediaType === 'tts') {
         // Get random background color
         const randomColor = backgroundColors[Math.floor(Math.random() * backgroundColors.length)];
         
-        // Send fullscreen message with text input value
-        socket.emit('send-fullscreen-message', {
+        const messageData = {
           swarmId: swarmId,
           target: targetAudience,
           text: liveMessageInput.trim(),
-          color: randomColor
-        });
+          color: randomColor,
+          useTTS: mediaType === 'tts' // Only enable TTS when TTS mode is selected
+        };
+        
+        console.log('📤 Sending fullscreen message:', messageData);
+        
+        // Send fullscreen message with text input value
+        // TTS mode sends both text AND TTS flag
+        socket.emit('send-fullscreen-message', messageData);
         
         // Add to local messages as confirmation
-        const icon = mediaType === 'text' ? '📝' : mediaType === 'tts' ? '🗣️' : '📝🗣️';
+        const icon = mediaType === 'text' ? '📝' : '🗣️';
+        const typeLabel = mediaType === 'text' ? 'Text' : 'Text + TTS';
         setLiveMessages(prev => [...prev, {
           nickname: 'You',
-          message: `${icon} Sent "${liveMessageInput.trim()}" to ${targetDisplay}`,
+          message: `${icon} Sent "${liveMessageInput.trim()}" to ${targetDisplay} (${typeLabel})`,
           timestamp: new Date().toISOString(),
           socketId: currentSocketId,
           role: `→ ${targetDisplay}`
@@ -1135,12 +1175,14 @@ export default function SwarmPage() {
 
   const handleRoleSelection = (role: string) => {
     setSelectedRole(role);
+    selectedRoleRef.current = role; // Initialize ref
     connectToSwarm(nickname, role);
   };
 
   const handleNicknameSubmit = () => {
     setNickname(roleInput);
     setSelectedRole(roleInput);
+    selectedRoleRef.current = roleInput; // Initialize ref
     setShowNicknameModal(false);
     connectToSwarm(roleInput, roleInput);
   };
@@ -1240,82 +1282,88 @@ export default function SwarmPage() {
             
             {/* Only showing Live Swarm chat now */}
             <ChatContainer>
-                <RoleDisplayBar>
-                  <HomeLink href="/">
-                    warm
-                    <LogoImage 
-                      src="/warmswarm-logo-transparent.png" 
-                      alt="WarmSwarm Logo"
-                    />
-                    swarm
-                  </HomeLink>
-                  <RoleDisplayText>
-                    Test Swarm
-                  </RoleDisplayText>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-                    <RoleSelect
-                      value={selectedRole}
-                      onChange={(e) => handleRoleChange(e.target.value)}
-                      disabled={!socket}
-                    >
-                      <option value="sender">Sender</option>
-                      <option value="group-1">Group 1</option>
-                      <option value="group-2">Group 2</option>
-                      <option value="group-3">Group 3</option>
-                      <option value="group-4">Group 4</option>
-                    </RoleSelect>
-                    <InfoIcon onClick={() => setShowInfoPopup(!showInfoPopup)}>
-                      ℹ️
-                    </InfoIcon>
-                    {showInfoPopup && (
-                      <>
-                        <InfoPopupOverlay onClick={() => setShowInfoPopup(false)} />
-                        <InfoPopup>
-                          <h3>About Roles</h3>
-                          <p><strong>Sender:</strong> Send media to specific groups</p>
-                          <p><strong>Groups:</strong> Receive and view messages from the sender</p>
-                          <ul>
-                            <li>Group 1-4: Individual channels</li>
-                            <li>Sender can broadcast to all, even/odd, or specific groups</li>
-                          </ul>
-                        </InfoPopup>
-                      </>
-                    )}
-                  </div>
-                </RoleDisplayBar>
+                {/* Hide top bar for multiview */}
+                {selectedRole !== 'multiview' && (
+                  <>
+                    <RoleDisplayBar>
+                      <HomeLink href="/">
+                        warm
+                        <LogoImage 
+                          src="/warmswarm-logo-transparent.png" 
+                          alt="WarmSwarm Logo"
+                        />
+                        swarm
+                      </HomeLink>
+                      <RoleDisplayText>
+                        Test Swarm
+                      </RoleDisplayText>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+                        <RoleSelect
+                          value={selectedRole}
+                          onChange={(e) => handleRoleChange(e.target.value)}
+                          disabled={!socket}
+                        >
+                          <option value="sender">Sender</option>
+                          <option value="group-1">Group 1</option>
+                          <option value="group-2">Group 2</option>
+                          <option value="group-3">Group 3</option>
+                          <option value="group-4">Group 4</option>
+                          <option value="multiview">MultiView</option>
+                        </RoleSelect>
+                        <InfoIcon onClick={() => setShowInfoPopup(!showInfoPopup)}>
+                          ℹ️
+                        </InfoIcon>
+                        {showInfoPopup && (
+                          <>
+                            <InfoPopupOverlay onClick={() => setShowInfoPopup(false)} />
+                            <InfoPopup>
+                              <h3>About Roles</h3>
+                              <p><strong>Sender:</strong> Send media to specific groups</p>
+                              <p><strong>Groups:</strong> Receive and view messages from the sender</p>
+                              <ul>
+                                <li>Group 1-4: Individual channels</li>
+                                <li>Sender can broadcast to all, even/odd, or specific groups</li>
+                              </ul>
+                            </InfoPopup>
+                          </>
+                        )}
+                      </div>
+                    </RoleDisplayBar>
 
-                {/* Group Count Bar - shows how many people in each group */}
-                {selectedRole === 'sender' && (
-                  <GroupCountBar>
-                    <GroupCount>Group1: <span className="count">({groupCounts['group-1']})</span></GroupCount>
-                    <GroupCount>Group2: <span className="count">({groupCounts['group-2']})</span></GroupCount>
-                    <GroupCount>Group3: <span className="count">({groupCounts['group-3']})</span></GroupCount>
-                    <GroupCount>Group4: <span className="count">({groupCounts['group-4']})</span></GroupCount>
-                  </GroupCountBar>
+                    {/* Group Count Bar - shows how many people in each group */}
+                    {selectedRole === 'sender' && (
+                      <GroupCountBar>
+                        <GroupCount>Group1: <span className="count">({groupCounts['group-1']})</span></GroupCount>
+                        <GroupCount>Group2: <span className="count">({groupCounts['group-2']})</span></GroupCount>
+                        <GroupCount>Group3: <span className="count">({groupCounts['group-3']})</span></GroupCount>
+                        <GroupCount>Group4: <span className="count">({groupCounts['group-4']})</span></GroupCount>
+                      </GroupCountBar>
+                    )}
+                  </>
                 )}
 
                 {/* Fullscreen message display for groups */}
                 {selectedRole === 'multiview' ? (
                   <MultiviewGrid>
-                    <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#667eea'}>
+                    <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#d63384'}>
                       <MultiviewLabel>Group 1</MultiviewLabel>
                       {multiviewMessages['group-1'] && (
                         <MultiviewText>{multiviewMessages['group-1'].text}</MultiviewText>
                       )}
                     </MultiviewCell>
-                    <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#764ba2'}>
+                    <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#dc2626'}>
                       <MultiviewLabel>Group 2</MultiviewLabel>
                       {multiviewMessages['group-2'] && (
                         <MultiviewText>{multiviewMessages['group-2'].text}</MultiviewText>
                       )}
                     </MultiviewCell>
-                    <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#8b5cf6'}>
+                    <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#f59e0b'}>
                       <MultiviewLabel>Group 3</MultiviewLabel>
                       {multiviewMessages['group-3'] && (
                         <MultiviewText>{multiviewMessages['group-3'].text}</MultiviewText>
                       )}
                     </MultiviewCell>
-                    <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#d63384'}>
+                    <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#10b981'}>
                       <MultiviewLabel>Group 4</MultiviewLabel>
                       {multiviewMessages['group-4'] && (
                         <MultiviewText>{multiviewMessages['group-4'].text}</MultiviewText>
@@ -1387,9 +1435,8 @@ export default function SwarmPage() {
                     >
                       <option value="text">📝 Text</option>
                       <option value="tts">🗣️ TTS</option>
-                      <option value="text-tts">📝🗣️ Text & TTS</option>
                       <option value="image">🖼️ Image</option>
-                      <option value="video">🎬 Video</option>
+                      <option value="video" disabled style={{ color: '#999' }}>🎬 Video (coming soon)</option>
                     </MediaTypeSelect>
 
                     {/* Preset dropdown for selected media type */}
@@ -1399,7 +1446,7 @@ export default function SwarmPage() {
                         const selected = e.target.value;
                         setMediaPreset(selected);
                         // Populate text input with preset value
-                        if (selected && (mediaType === 'text' || mediaType === 'tts' || mediaType === 'text-tts')) {
+                        if (selected && (mediaType === 'text' || mediaType === 'tts')) {
                           setLiveMessageInput(selected);
                         }
                       }}
@@ -1426,8 +1473,8 @@ export default function SwarmPage() {
                       <option value="4">Group 4</option>
                     </RoleSelect>
 
-                    {/* For text, TTS, or text-tts: show input and send button */}
-                    {(mediaType === 'text' || mediaType === 'tts' || mediaType === 'text-tts') && (
+                    {/* For text or TTS: show input and send button */}
+                    {(mediaType === 'text' || mediaType === 'tts') && (
                       <MediaInputWrapper>
                         <MessageInput
                           type="text"
@@ -1443,8 +1490,7 @@ export default function SwarmPage() {
                           }}
                           placeholder={
                             mediaType === 'text' ? 'Type message...' : 
-                            mediaType === 'tts' ? 'Type TTS message...' : 
-                            'Type message (Text & TTS)...'
+                            'Type message (will be spoken)...'
                           }
                           disabled={!socket}
                         />

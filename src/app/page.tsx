@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -109,7 +111,7 @@ const ActionGrid = styled.div`
   }
 `;
 
-const ActionCard = styled.div`
+const ActionCard = styled.div<{ $clickable?: boolean }>`
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -118,6 +120,7 @@ const ActionCard = styled.div`
   text-align: center;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   transition: all 0.225s ease;
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
   
   &:hover {
     background: rgba(255, 255, 255, 0.25);
@@ -165,6 +168,66 @@ const ActionDescription = styled.p`
   line-height: 1.5;
 `;
 
+const CodeInputWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const CodeInput = styled.input`
+  width: 200px;
+  padding: 15px 50px 15px 20px;
+  font-size: 2rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-weight: 700;
+  outline: none;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    border-color: white;
+    background: white;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+  
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3rem;
+  }
+`;
+
+const SubmitArrow = styled.button<{ $disabled: boolean }>`
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  opacity: ${props => props.$disabled ? 0.3 : 1};
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-50%) translateX(3px);
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+  }
+`;
+
 const SecondaryAction = styled.div`
   text-align: center;
   margin-top: 40px;
@@ -191,6 +254,35 @@ const SecondaryLink = styled(Link)`
 `;
 
 export default function Home() {
+  const router = useRouter();
+  const [inviteCode, setInviteCode] = useState('');
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (value.length <= 4) {
+      setInviteCode(value);
+    }
+  };
+
+  const handleJoinClick = () => {
+    if (inviteCode.length === 4) {
+      router.push(`/swarm?code=${inviteCode}`);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && inviteCode.length === 4) {
+      handleJoinClick();
+    }
+  };
+
+  const handleCardClick = () => {
+    // If no code entered, just go to swarm page
+    if (inviteCode.length === 0) {
+      router.push('/swarm');
+    }
+  };
+
   return (
     <Container>
       <HelpLink href="/wtf">
@@ -211,13 +303,32 @@ export default function Home() {
       
       <Main>
         <ActionGrid>
-          <LinkCard href="/swarm">
+          <ActionCard $clickable onClick={handleCardClick}>
             <ActionIcon>🐝</ActionIcon>
             <ActionTitle>join a swarm</ActionTitle>
             <ActionDescription>
-              enter a swarm code
+              Enter a Swarm Code
             </ActionDescription>
-          </LinkCard>
+            <CodeInputWrapper onClick={(e) => e.stopPropagation()}>
+              <CodeInput
+                type="text"
+                value={inviteCode}
+                onChange={handleCodeChange}
+                onKeyPress={handleKeyPress}
+                placeholder="ABCD"
+                maxLength={4}
+                autoComplete="off"
+              />
+              <SubmitArrow
+                type="button"
+                onClick={handleJoinClick}
+                $disabled={inviteCode.length !== 4}
+                disabled={inviteCode.length !== 4}
+              >
+                ➜
+              </SubmitArrow>
+            </CodeInputWrapper>
+          </ActionCard>
           
           <LinkCard href="/templates">
             <ActionIcon>📋</ActionIcon>

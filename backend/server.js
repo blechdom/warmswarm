@@ -415,7 +415,7 @@ io.on('connection', (socket) => {
   });
 
   // Send fullscreen message to specific groups
-  socket.on('send-fullscreen-message', ({ swarmId, target, text, color }) => {
+  socket.on('send-fullscreen-message', ({ swarmId, target, text, color, useTTS }) => {
     const user = socketToUser.get(socket.id);
     if (user && swarmId && user.role === 'sender') {
       let targetRooms = [];
@@ -436,12 +436,13 @@ io.on('connection', (socket) => {
         const targetRoom = `${swarmId}:${groupRole}`;
         const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
         const numMembers = roomSockets ? roomSockets.size : 0;
-        console.log(`  [FULLSCREEN] Sending to room: ${targetRoom} (${numMembers} clients)`);
+        console.log(`  [FULLSCREEN] Sending to room: ${targetRoom} (${numMembers} clients) - TTS: ${useTTS}`);
         
         io.to(targetRoom).emit('fullscreen-message', {
           text: text,
           color: color,
-          group: groupRole  // Include group identifier for multiview
+          group: groupRole,  // Include group identifier for multiview
+          useTTS: useTTS     // Pass through TTS flag
         });
       });
       

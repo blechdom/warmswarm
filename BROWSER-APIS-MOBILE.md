@@ -2,15 +2,16 @@
 
 ## Table of Contents
 1. [Core Mobile Enhancement APIs](#core-mobile-enhancement-apis)
-2. [Time & Synchronization APIs](#time--synchronization-apis)
-3. [Communication & Messaging APIs](#communication--messaging-apis)
-4. [Geolocation API - Accuracy & Details](#geolocation-api---accuracy--details)
-5. [Radio & Phone Call Capabilities](#radio--phone-call-capabilities)
-6. [Network-Specific Considerations](#network-specific-considerations)
-7. [Cross-Platform Reality Check](#cross-platform-reality-check)
-8. [Time Synchronization Strategies](#time-synchronization-strategies)
-9. [Browser-Based vs. Wrapped vs. Native](#browser-based-vs-wrapped-vs-native)
-10. [Recommendations](#recommendations)
+2. [Text-to-Speech (TTS) APIs](#text-to-speech-tts-apis)
+3. [Time & Synchronization APIs](#time--synchronization-apis)
+4. [Communication & Messaging APIs](#communication--messaging-apis)
+5. [Geolocation API - Accuracy & Details](#geolocation-api---accuracy--details)
+6. [Radio & Phone Call Capabilities](#radio--phone-call-capabilities)
+7. [Network-Specific Considerations](#network-specific-considerations)
+8. [Cross-Platform Reality Check](#cross-platform-reality-check)
+9. [Time Synchronization Strategies](#time-synchronization-strategies)
+10. [Browser-Based vs. Wrapped vs. Native](#browser-based-vs-wrapped-vs-native)
+11. [Recommendations](#recommendations)
 
 ---
 
@@ -61,6 +62,290 @@ console.log(connection.effectiveType); // '4g', 'wifi', etc.
 console.log(connection.downlink); // Bandwidth in Mbps
 console.log(connection.rtt); // Round-trip time in ms
 ```
+
+---
+
+## Text-to-Speech (TTS) APIs
+
+### **Web Speech API - Speech Synthesis**
+
+**Best for:** Free, offline text-to-speech in any browser
+
+**Characteristics:**
+- **Free:** No API costs, completely free to use
+- **Offline:** Local voices work without internet connection
+- **Cross-platform:** Excellent (iOS Safari 7+, Android Chrome, all desktop browsers)
+- **Low latency:** Instant playback (<100ms)
+- **Multiple voices:** System voices available (varies by device)
+- **Privacy:** Text never leaves device (for local voices)
+
+**Voice Quality:**
+- iOS/macOS: Excellent (Siri voices)
+- Android: Good (Google TTS voices)
+- Desktop: Varies by OS
+
+**Basic Usage:**
+```javascript
+// Simple text-to-speech
+const speak = (text) => {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;    // Speed (0.1 to 10)
+  utterance.pitch = 1.0;   // Pitch (0 to 2)
+  utterance.volume = 1.0;  // Volume (0 to 1)
+  window.speechSynthesis.speak(utterance);
+};
+
+speak("Hello! This is text to speech.");
+```
+
+**Advanced Implementation:**
+```javascript
+class TextToSpeech {
+  constructor() {
+    this.synth = window.speechSynthesis;
+    this.voices = [];
+    this.loadVoices();
+  }
+  
+  loadVoices() {
+    this.voices = this.synth.getVoices();
+    
+    // Voices may load asynchronously
+    if (this.voices.length === 0) {
+      this.synth.addEventListener('voiceschanged', () => {
+        this.voices = this.synth.getVoices();
+      });
+    }
+  }
+  
+  speak(text, options = {}) {
+    return new Promise((resolve, reject) => {
+      this.synth.cancel(); // Cancel any ongoing speech
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Select voice
+      if (options.voiceName) {
+        utterance.voice = this.voices.find(v => v.name === options.voiceName);
+      } else if (options.lang) {
+        utterance.voice = this.voices.find(v => v.lang === options.lang);
+      }
+      
+      utterance.rate = options.rate || 1.0;
+      utterance.pitch = options.pitch || 1.0;
+      utterance.volume = options.volume || 1.0;
+      utterance.lang = options.lang || 'en-US';
+      
+      utterance.onend = () => resolve();
+      utterance.onerror = (error) => reject(error);
+      
+      // Track word boundaries (shows which word is being spoken)
+      utterance.onboundary = (event) => {
+        if (event.name === 'word' && options.onWord) {
+          const word = text.substring(event.charIndex, event.charIndex + event.charLength);
+          options.onWord(word, event.charIndex);
+        }
+      };
+      
+      this.synth.speak(utterance);
+    });
+  }
+  
+  pause() {
+    this.synth.pause();
+  }
+  
+  resume() {
+    this.synth.resume();
+  }
+  
+  stop() {
+    this.synth.cancel();
+  }
+  
+  getVoices(lang = null) {
+    if (lang) {
+      return this.voices.filter(v => v.lang.startsWith(lang));
+    }
+    return this.voices;
+  }
+}
+
+// Usage
+const tts = new TextToSpeech();
+
+// Speak with default voice
+await tts.speak("Hello world!");
+
+// Speak with custom settings
+await tts.speak("This is faster and higher pitched", {
+  rate: 1.5,
+  pitch: 1.3,
+  lang: 'en-US',
+  onWord: (word, index) => console.log('Speaking:', word)
+});
+
+// List available voices
+const voices = tts.getVoices();
+console.log(voices.map(v => `${v.name} (${v.lang})`));
+
+// Use specific voice
+const femaleVoice = voices.find(v => v.name.includes('Female'));
+await tts.speak("Using a specific voice", { voiceName: femaleVoice?.name });
+```
+
+**Cross-Platform Support:**
+- ✅ iOS Safari: Excellent (uses Siri voices)
+- ✅ Android Chrome: Excellent (uses Google TTS)
+- ✅ Desktop Chrome/Edge: Excellent
+- ✅ Desktop Safari: Excellent
+- ✅ Desktop Firefox: Good
+
+**Platform-Specific Notes:**
+
+**iOS/Safari:**
+- High-quality Siri voices
+- Must be initiated by user interaction (like all audio)
+- Multiple voices available (Samantha, Alex, etc.)
+- Supports multiple languages
+- Works offline
+
+**Android/Chrome:**
+- Uses Google TTS engine
+- Quality depends on system TTS voices installed
+- Users can download additional voices in system settings
+- Works offline if voices downloaded
+
+**Desktop:**
+- Voices vary by operating system
+- macOS: Excellent (Siri voices)
+- Windows: Good (Microsoft voices)
+- Linux: Varies (eSpeak, Festival)
+
+**Typical Voice Counts:**
+- iOS: 40-80 voices (many languages)
+- Android: 10-30 voices (depends on user's installed voices)
+- macOS: 60-90 voices
+- Windows: 10-20 voices
+- Linux: 5-15 voices
+
+**Cloud TTS Alternatives:**
+
+For higher quality voices, consider cloud APIs:
+
+| Service | Quality | Cost | Latency | Offline |
+|---------|---------|------|---------|---------|
+| **Web Speech API** | Medium-High | Free | <100ms | ✅ Yes |
+| **Google Cloud TTS** | High | $4-16/1M chars | 200-500ms | ❌ No |
+| **ElevenLabs** | Excellent | $5+/month | 300-800ms | ❌ No |
+| **Amazon Polly** | High | $4-16/1M chars | 300-600ms | ❌ No |
+| **Azure TTS** | High | $4-16/1M chars | 200-500ms | ❌ No |
+
+**Hybrid Approach (Native + Cloud):**
+```javascript
+// Use native TTS by default, cloud for premium features
+class HybridTTS {
+  constructor() {
+    this.nativeTTS = new TextToSpeech();
+    this.cloudAPIKey = null;
+  }
+  
+  setCloudAPI(apiKey) {
+    this.cloudAPIKey = apiKey;
+  }
+  
+  async speak(text, usePremium = false) {
+    if (usePremium && this.cloudAPIKey) {
+      try {
+        await this.speakWithCloud(text);
+      } catch (error) {
+        console.error('Cloud TTS failed, falling back to native:', error);
+        await this.nativeTTS.speak(text);
+      }
+    } else {
+      await this.nativeTTS.speak(text);
+    }
+  }
+  
+  async speakWithCloud(text) {
+    // Implement cloud TTS (Google, ElevenLabs, etc.)
+    // This example uses Google Cloud TTS
+    const response = await fetch(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${this.cloudAPIKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { text },
+          voice: { languageCode: 'en-US', name: 'en-US-Neural2-F' },
+          audioConfig: { audioEncoding: 'MP3' }
+        })
+      }
+    );
+    
+    const data = await response.json();
+    const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+    await audio.play();
+  }
+}
+```
+
+**Best Practices:**
+
+1. **Check for support:**
+```javascript
+if (!('speechSynthesis' in window)) {
+  console.log('TTS not supported');
+  // Provide fallback (display text, or use cloud API)
+}
+```
+
+2. **Load voices properly:**
+```javascript
+// Voices may load asynchronously
+let voices = speechSynthesis.getVoices();
+if (voices.length === 0) {
+  speechSynthesis.addEventListener('voiceschanged', () => {
+    voices = speechSynthesis.getVoices();
+  });
+}
+```
+
+3. **Handle user interaction requirement (iOS):**
+```javascript
+// iOS requires user interaction to start audio
+button.addEventListener('click', () => {
+  tts.speak("This works on iOS");
+});
+```
+
+4. **Cancel before speaking:**
+```javascript
+// Always cancel ongoing speech before starting new
+speechSynthesis.cancel();
+speechSynthesis.speak(utterance);
+```
+
+5. **Handle errors gracefully:**
+```javascript
+utterance.onerror = (event) => {
+  console.error('TTS error:', event.error);
+  // Fallback: display text or retry
+};
+```
+
+**Use Cases:**
+- ✅ Accessibility (screen readers)
+- ✅ Language learning apps
+- ✅ Navigation apps
+- ✅ Notifications and alerts
+- ✅ Interactive storytelling
+- ✅ Voice assistants
+- ✅ Reading long-form content
+- ✅ Multi-language support
+
+**Demo Page:**
+Visit `/tts-demo` to test different voices and settings interactively.
 
 ---
 
