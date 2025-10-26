@@ -818,6 +818,108 @@ const MultiviewText = styled.div`
   }
 `;
 
+// Swimlane view (8 panels: 4 Live + 4 Preview)
+const SwimlaneContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #000;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+`;
+
+const SwimlaneRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+`;
+
+const SwimlanePanel = styled.div<{ $bgColor: string, $isPreview?: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.$bgColor};
+  overflow: hidden;
+  border: ${props => props.$isPreview ? '2px dashed rgba(255, 255, 255, 0.3)' : 'none'};
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+`;
+
+const SwimlaneLabelTop = styled.div<{ $isPreview?: boolean }>`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: ${props => props.$isPreview ? 'rgba(255, 165, 0, 0.8)' : 'rgba(0, 200, 0, 0.8)'};
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  z-index: 10;
+`;
+
+const SwimlaneText = styled.div`
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  word-wrap: break-word;
+  padding: 10px;
+  
+  @media (min-width: 1400px) {
+    font-size: 2rem;
+  }
+`;
+
+// Layout toggle buttons
+const LayoutToggleBar = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const ToggleButton = styled.button<{ $active?: boolean }>`
+  background: ${props => props.$active ? 'rgba(102, 126, 234, 0.8)' : 'rgba(255, 255, 255, 0.1)'};
+  border: 1px solid ${props => props.$active ? 'rgba(102, 126, 234, 1)' : 'rgba(255, 255, 255, 0.2)'};
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  &:hover {
+    background: ${props => props.$active ? 'rgba(102, 126, 234, 0.9)' : 'rgba(255, 255, 255, 0.2)'};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ToggleLabel = styled.span`
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  margin-right: 8px;
+`;
+
 const RoleSelect = styled.select`
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.2);
@@ -1022,6 +1124,24 @@ export default function SwarmPage() {
     'group-3': null,
     'group-4': null
   });
+  
+  // Sender view controls
+  const [senderLayout, setSenderLayout] = useState<'grid' | 'swimlane'>('grid');
+  const [sendMode, setSendMode] = useState<'live' | 'preview'>('live');
+  
+  // Preview messages for each group (sender only)
+  const [previewMessages, setPreviewMessages] = useState<{
+    'group-1': {text: string, color: string} | null,
+    'group-2': {text: string, color: string} | null,
+    'group-3': {text: string, color: string} | null,
+    'group-4': {text: string, color: string} | null
+  }>({
+    'group-1': null,
+    'group-2': null,
+    'group-3': null,
+    'group-4': null
+  });
+  
   const liveMessagesEndRef = useRef<HTMLDivElement>(null);
   
   const swarmId = 'default-swarm';
@@ -1071,7 +1191,7 @@ export default function SwarmPage() {
 
     // Update group counts when users join/leave (no more system messages)
     newSocket.on('group-counts', (counts: { [key: string]: number }) => {
-      setGroupCounts(counts);
+      setGroupCounts(counts as { 'group-1': number, 'group-2': number, 'group-3': number, 'group-4': number });
     });
 
     // Listen for fullscreen messages (for groups)
@@ -1204,22 +1324,38 @@ export default function SwarmPage() {
           useTTS: mediaType === 'tts' // Only enable TTS when TTS mode is selected
         };
         
-        console.log('📤 Sending fullscreen message:', messageData);
+        // Determine which groups to target
+        const targetGroups = targetAudience === 'all' ? ['group-1', 'group-2', 'group-3', 'group-4'] :
+                           targetAudience === 'even' ? ['group-2', 'group-4'] :
+                           targetAudience === 'odd' ? ['group-1', 'group-3'] :
+                           [`group-${targetAudience}`];
         
-        // Send fullscreen message with text input value
-        // TTS mode sends both text AND TTS flag
-        socket.emit('send-fullscreen-message', messageData);
-        
-        // Add to local messages as confirmation
-        const icon = mediaType === 'text' ? '📝' : '🗣️';
-        const typeLabel = mediaType === 'text' ? 'Text' : 'Text + TTS';
-        setLiveMessages(prev => [...prev, {
-          nickname: 'You',
-          message: `${icon} Sent "${liveMessageInput.trim()}" to ${targetDisplay} (${typeLabel})`,
-          timestamp: new Date().toISOString(),
-          socketId: currentSocketId,
-          role: `→ ${targetDisplay}`
-        }]);
+        if (sendMode === 'preview') {
+          // Preview mode: Stage message in preview panels (NOT sent yet)
+          console.log('👁️ Staging message in preview for:', targetGroups);
+          setPreviewMessages(prev => {
+            const newPreviews = { ...prev };
+            targetGroups.forEach(group => {
+              newPreviews[group as keyof typeof prev] = { text: messageData.text, color: messageData.color };
+            });
+            return newPreviews;
+          });
+        } else {
+          // Live mode: Send immediately to groups AND show in live panels
+          console.log('📤 Sending fullscreen message live:', messageData);
+          socket.emit('send-fullscreen-message', messageData);
+          
+          // Add to local messages as confirmation
+          const icon = mediaType === 'text' ? '📝' : '🗣️';
+          const typeLabel = mediaType === 'text' ? 'Text' : 'Text + TTS';
+          setLiveMessages(prev => [...prev, {
+            nickname: 'You',
+            message: `${icon} Sent "${liveMessageInput.trim()}" to ${targetDisplay} (${typeLabel})`,
+            timestamp: new Date().toISOString(),
+            socketId: currentSocketId,
+            role: `→ ${targetDisplay}`
+          }]);
+        }
       } else {
         // Regular message for image/video (not implemented yet)
         socket.emit('broadcast-live-message', {
@@ -1249,6 +1385,35 @@ export default function SwarmPage() {
       setMediaPreset('');
       setShowHistoryDropdown(false);
     }
+  };
+
+  const sendAllPreviewsLive = () => {
+    if (!socket) return;
+    
+    // Send each preview message that exists
+    Object.entries(previewMessages).forEach(([groupKey, message]) => {
+      if (message) {
+        const groupNumber = groupKey.split('-')[1];
+        const messageData = {
+          swarmId: swarmId,
+          target: groupNumber,
+          text: message.text,
+          color: message.color,
+          useTTS: mediaType === 'tts'
+        };
+        
+        console.log('📤 Sending preview to live:', groupKey, messageData);
+        socket.emit('send-fullscreen-message', messageData);
+      }
+    });
+    
+    // Clear all previews
+    setPreviewMessages({
+      'group-1': null,
+      'group-2': null,
+      'group-3': null,
+      'group-4': null
+    });
   };
 
   const scrollLiveToBottom = () => {
@@ -1351,65 +1516,9 @@ export default function SwarmPage() {
               </RoleButtonGrid>
             </CenteredRoleSelector>
           ) : (
-            // Show chat after role is selected
+            // Show swarm view after role is selected
             <TabContent style={{ padding: 0 }}>
-              {/* Control Room removed - only showing Live Swarm chat */}
-              {false && (
-              <ChatContainer>
-                <RoleDisplayBar>
-                  <RoleDisplayText style={{ flex: 1, justifyContent: 'center' }}>
-                    {selectedRole === 'sender' ? '📡' : '📺'} {selectedRole.replace('-', ' ')}
-                  </RoleDisplayText>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <RoleLabel>Change Role:</RoleLabel>
-                    <RoleSelect
-                      value={selectedRole}
-                      onChange={(e) => handleRoleChange(e.target.value)}
-                      disabled={!socket}
-                      style={{ minWidth: '130px' }}
-                    >
-                      <option value="sender">Sender</option>
-                      <option value="receiver-1">Receiver 1</option>
-                      <option value="receiver-2">Receiver 2</option>
-                      <option value="receiver-3">Receiver 3</option>
-                      <option value="receiver-4">Receiver 4</option>
-                    </RoleSelect>
-                  </div>
-                </RoleDisplayBar>
-
-                <MessagesArea>
-                  {messages.map((msg, index) => (
-                    msg.socketId === 'system' ? (
-                      <SystemMessage key={index}>{msg.message}</SystemMessage>
-                    ) : (
-                      <Message key={index} $isOwn={msg.socketId === currentSocketId}>
-                        <MessageNickname>{msg.nickname}</MessageNickname>
-                        <MessageBubble $isOwn={msg.socketId === currentSocketId}>
-                          {msg.message}
-                        </MessageBubble>
-                        <MessageTime>{formatTime(msg.timestamp)}</MessageTime>
-                      </Message>
-                    )
-                  ))}
-                  <div ref={messagesEndRef} />
-                </MessagesArea>
-                
-                <InputArea onSubmit={handleSendMessage}>
-                  <MessageInput
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    placeholder="Type a message..."
-                    disabled={!socket}
-                  />
-                  <SendButton type="submit" disabled={!socket || !messageInput.trim()}>
-                    Send
-                  </SendButton>
-                </InputArea>
-              </ChatContainer>
-            )}
-            
-            {/* Only showing Live Swarm chat now */}
+            {/* Main swarm interface */}
             <ChatContainer>
                 {/* Top navigation bar - shown for ALL roles */}
                 <RoleDisplayBar>
@@ -1470,32 +1579,76 @@ export default function SwarmPage() {
                 {/* Fullscreen message display for groups */}
                 {(selectedRole === 'multiview' || selectedRole === 'sender') ? (
                   <MultiviewContainer>
-                    <MultiviewGrid>
-                      <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#d63384'}>
-                        <MultiviewLabel>Group 1</MultiviewLabel>
-                        {multiviewMessages['group-1'] && (
-                          <MultiviewText>{multiviewMessages['group-1'].text}</MultiviewText>
-                        )}
-                      </MultiviewCell>
-                      <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#dc2626'}>
-                        <MultiviewLabel>Group 2</MultiviewLabel>
-                        {multiviewMessages['group-2'] && (
-                          <MultiviewText>{multiviewMessages['group-2'].text}</MultiviewText>
-                        )}
-                      </MultiviewCell>
-                      <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#f59e0b'}>
-                        <MultiviewLabel>Group 3</MultiviewLabel>
-                        {multiviewMessages['group-3'] && (
-                          <MultiviewText>{multiviewMessages['group-3'].text}</MultiviewText>
-                        )}
-                      </MultiviewCell>
-                      <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#10b981'}>
-                        <MultiviewLabel>Group 4</MultiviewLabel>
-                        {multiviewMessages['group-4'] && (
-                          <MultiviewText>{multiviewMessages['group-4'].text}</MultiviewText>
-                        )}
-                      </MultiviewCell>
-                    </MultiviewGrid>
+                    {/* Grid view (2x2) */}
+                    {(selectedRole === 'multiview' || senderLayout === 'grid') && (
+                      <MultiviewGrid>
+                        <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#d63384'}>
+                          <MultiviewLabel>Group 1</MultiviewLabel>
+                          {multiviewMessages['group-1'] && (
+                            <MultiviewText>{multiviewMessages['group-1'].text}</MultiviewText>
+                          )}
+                        </MultiviewCell>
+                        <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#dc2626'}>
+                          <MultiviewLabel>Group 2</MultiviewLabel>
+                          {multiviewMessages['group-2'] && (
+                            <MultiviewText>{multiviewMessages['group-2'].text}</MultiviewText>
+                          )}
+                        </MultiviewCell>
+                        <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#f59e0b'}>
+                          <MultiviewLabel>Group 3</MultiviewLabel>
+                          {multiviewMessages['group-3'] && (
+                            <MultiviewText>{multiviewMessages['group-3'].text}</MultiviewText>
+                          )}
+                        </MultiviewCell>
+                        <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#10b981'}>
+                          <MultiviewLabel>Group 4</MultiviewLabel>
+                          {multiviewMessages['group-4'] && (
+                            <MultiviewText>{multiviewMessages['group-4'].text}</MultiviewText>
+                          )}
+                        </MultiviewCell>
+                      </MultiviewGrid>
+                    )}
+                    
+                    {/* Swimlane view (4 Live + 4 Preview) */}
+                    {selectedRole === 'sender' && senderLayout === 'swimlane' && (
+                      <SwimlaneContainer>
+                        {/* Top row: Live messages */}
+                        <SwimlaneRow>
+                          {['group-1', 'group-2', 'group-3', 'group-4'].map((group, index) => (
+                            <SwimlanePanel
+                              key={`live-${group}`}
+                              $bgColor={multiviewMessages[group as keyof typeof multiviewMessages]?.color || ['#d63384', '#dc2626', '#f59e0b', '#10b981'][index]}
+                            >
+                              <SwimlaneLabelTop>Group {index + 1} Live</SwimlaneLabelTop>
+                              {multiviewMessages[group as keyof typeof multiviewMessages] && (
+                                <SwimlaneText>{multiviewMessages[group as keyof typeof multiviewMessages]!.text}</SwimlaneText>
+                              )}
+                            </SwimlanePanel>
+                          ))}
+                        </SwimlaneRow>
+                        
+                        {/* Bottom row: Preview messages */}
+                        <SwimlaneRow>
+                          {['group-1', 'group-2', 'group-3', 'group-4'].map((group, index) => {
+                            const previewColors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981']; // Purple, Pink, Orange, Green
+                            return (
+                              <SwimlanePanel
+                                key={`preview-${group}`}
+                                $bgColor={previewMessages[group as keyof typeof previewMessages]?.color || previewColors[index]}
+                                $isPreview
+                              >
+                                <SwimlaneLabelTop $isPreview>
+                                  Group {index + 1} Preview
+                                </SwimlaneLabelTop>
+                                {previewMessages[group as keyof typeof previewMessages] && (
+                                  <SwimlaneText>{previewMessages[group as keyof typeof previewMessages]!.text}</SwimlaneText>
+                                )}
+                              </SwimlanePanel>
+                            );
+                          })}
+                        </SwimlaneRow>
+                      </SwimlaneContainer>
+                    )}
                   </MultiviewContainer>
                 ) : selectedRole.startsWith('group-') ? (
                   <FullscreenMessage $bgColor={currentFullscreenMessage?.color || '#667eea'}>
@@ -1506,6 +1659,59 @@ export default function SwarmPage() {
                 ) : null}
 
                 {/* No chat messages area for groups - they only see fullscreen messages */}
+                
+                {/* Layout and Mode controls (sender only) */}
+                {selectedRole === 'sender' && (
+                  <LayoutToggleBar>
+                    <ToggleLabel>Layout:</ToggleLabel>
+                    <ToggleButton
+                      $active={senderLayout === 'grid'}
+                      onClick={() => setSenderLayout('grid')}
+                    >
+                      ▦ Grid
+                    </ToggleButton>
+                    <ToggleButton
+                      $active={senderLayout === 'swimlane'}
+                      onClick={() => setSenderLayout('swimlane')}
+                    >
+                      ☰ Swimlane
+                    </ToggleButton>
+                    
+                    {senderLayout === 'swimlane' && (
+                      <>
+                        <ToggleLabel style={{ marginLeft: '20px' }}>Mode:</ToggleLabel>
+                        <ToggleButton
+                          $active={sendMode === 'live'}
+                          onClick={() => setSendMode('live')}
+                        >
+                          🔴 Live
+                        </ToggleButton>
+                        <ToggleButton
+                          $active={sendMode === 'preview'}
+                          onClick={() => setSendMode('preview')}
+                        >
+                          👁️ Preview
+                        </ToggleButton>
+                        
+                        {sendMode === 'preview' && (
+                          <>
+                            <ToggleButton
+                              onClick={sendAllPreviewsLive}
+                              disabled={!Object.values(previewMessages).some(msg => msg !== null)}
+                              style={{ 
+                                background: 'rgba(0, 200, 0, 0.8)',
+                                border: '1px solid rgba(0, 255, 0, 0.8)',
+                                marginLeft: '20px'
+                              }}
+                            >
+                              🚀 Go Live with Preview
+                            </ToggleButton>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </LayoutToggleBar>
+                )}
                 
                 {selectedRole === 'sender' && (
                   <MediaControlBar>

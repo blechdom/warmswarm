@@ -50,6 +50,13 @@ export default function DemosIndex() {
       path: '/demos/emojis',
       color: '#E91E63',
       icon: '🎭'
+    },
+    {
+      title: '🎨 Drawing Mode',
+      description: 'Drawful-style collaborative drawing. Draw on canvas and send to specific groups. Perfect for interactive games and creative collaboration.',
+      path: '/draw',
+      color: '#FF5722',
+      icon: '✏️'
     }
   ];
 

@@ -450,6 +450,36 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Send drawing to all participants (collaborative drawing mode)
+  socket.on('send-drawing', ({ swarmId, target, imageData, timestamp }) => {
+    const user = socketToUser.get(socket.id);
+    if (user && swarmId) {
+      const senderGroup = user.role; // group-1, group-2, etc.
+      
+      // For collaborative drawing, broadcast to all groups except sender
+      const allGroups = ['group-1', 'group-2', 'group-3', 'group-4'];
+      
+      allGroups.forEach(groupRole => {
+        // Send to all groups (they'll filter out their own)
+        const targetRoom = `${swarmId}:${groupRole}`;
+        const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
+        const numMembers = roomSockets ? roomSockets.size : 0;
+        
+        if (numMembers > 0) {
+          io.to(targetRoom).emit('receive-drawing', {
+            imageData: imageData,
+            timestamp: timestamp,
+            fromGroup: senderGroup, // Include sender's group
+            senderId: socket.id
+          });
+          console.log(`  [DRAWING] Sending from ${senderGroup} to ${targetRoom} (${numMembers} clients)`);
+        }
+      });
+      
+      console.log(`[DRAWING] ${user.nickname} (${senderGroup}) broadcasted drawing to all`);
+    }
+  });
+
   // WebRTC signaling events
   socket.on('webrtc-offer', ({ targetSocketId, offer }) => {
     const user = socketToUser.get(socket.id);
