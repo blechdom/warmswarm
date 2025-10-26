@@ -297,11 +297,11 @@ io.on('connection', (socket) => {
     socket.join(roleRoom);
     console.log(`  - Joined role room: ${roleRoom}`);
     
-    // If multiview, join all group rooms to receive all messages
-    if (role === 'multiview') {
+    // If multiview or sender, join all group rooms to receive all messages
+    if (role === 'multiview' || role === 'sender') {
       ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
         socket.join(`${swarmId}:${groupRole}`);
-        console.log(`  - Joined group room for multiview: ${swarmId}:${groupRole}`);
+        console.log(`  - Joined group room for ${role}: ${swarmId}:${groupRole}`);
       });
     }
     
@@ -341,8 +341,8 @@ io.on('connection', (socket) => {
       const oldRoleRoom = `${swarmId}:${user.role}`;
       socket.leave(oldRoleRoom);
       
-      // If leaving multiview, leave all group rooms
-      if (user.role === 'multiview') {
+      // If leaving multiview or sender, leave all group rooms
+      if (user.role === 'multiview' || user.role === 'sender') {
         ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
           socket.leave(`${swarmId}:${groupRole}`);
         });
@@ -352,11 +352,11 @@ io.on('connection', (socket) => {
       const newRoleRoom = `${swarmId}:${role}`;
       socket.join(newRoleRoom);
       
-      // If joining multiview, join all group rooms
-      if (role === 'multiview') {
+      // If joining multiview or sender, join all group rooms
+      if (role === 'multiview' || role === 'sender') {
         ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
           socket.join(`${swarmId}:${groupRole}`);
-          console.log(`  - Joined group room for multiview: ${swarmId}:${groupRole}`);
+          console.log(`  - Joined group room for ${role}: ${swarmId}:${groupRole}`);
         });
       }
       

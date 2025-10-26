@@ -584,9 +584,64 @@ const MediaInputWrapper = styled.div`
   gap: 10px;
   flex: 1;
   min-width: 300px;
+  position: relative;
   
   @media (max-width: 768px) {
     min-width: 200px;
+  }
+`;
+
+const HistoryDropdown = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 40px;
+  background: rgba(30, 30, 40, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px 8px 0 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+`;
+
+const HistoryItem = styled.div`
+  padding: 10px 16px;
+  color: white;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const HistoryToggleButton = styled.button`
+  display: none; /* Hidden for now */
+  position: absolute;
+  right: 45px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: rgba(255, 255, 255, 1);
+  }
+  
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 `;
 
@@ -676,17 +731,13 @@ const MediaTypeSelect = styled.select`
 `;
 
 const FullscreenMessage = styled.div<{ $bgColor: string }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background: ${props => props.$bgColor};
   padding: 40px;
-  z-index: 100;
+  overflow: hidden;
 `;
 
 const FullscreenText = styled.div`
@@ -706,18 +757,21 @@ const FullscreenText = styled.div`
   }
 `;
 
+const MultiviewContainer = styled.div`
+  flex: 1;
+  overflow: hidden;
+`;
+
 const MultiviewGrid = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 2px;
   background: #000;
-  z-index: 100;
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
 `;
 
 const MultiviewCell = styled.div<{ $bgColor: string }>`
@@ -946,10 +1000,12 @@ export default function SwarmPage() {
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [liveMessages, setLiveMessages] = useState<ChatMessage[]>([]);
   const [liveMessageInput, setLiveMessageInput] = useState('');
+  const [sentMessageHistory, setSentMessageHistory] = useState<string[]>([]); // History of sent messages
+  const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentSocketId, setCurrentSocketId] = useState('');
   const [groupCounts, setGroupCounts] = useState({ 'group-1': 0, 'group-2': 0, 'group-3': 0, 'group-4': 0 });
-  const [mediaType, setMediaType] = useState('text');
+  const [mediaType, setMediaType] = useState('tts');
   const [mediaPreset, setMediaPreset] = useState('');
   const [currentFullscreenMessage, setCurrentFullscreenMessage] = useState<{text: string, color: string, useTTS?: boolean} | null>(null);
   
@@ -1043,12 +1099,33 @@ export default function SwarmPage() {
       // Auto-play TTS if enabled and on a group (not sender or multiview)
       if (data.useTTS && isSupported && currentRole.startsWith('group-')) {
         console.log('✅ TTS conditions met, speaking...');
-        // Use default US English voice
-        const usVoice = voices.find(v => v.lang === 'en-US' && v.localService) || voices[0];
-        console.log('🗣️ Using voice:', usVoice?.name || 'default');
-        speak(data.text, { voice: usVoice }).catch(err => {
-          console.error('❌ TTS error:', err);
-        });
+        console.log('📋 Total voices available:', voices.length);
+        
+        // Aggressive US English voice selection
+        const usEnglishVoices = voices.filter(v => v.lang === 'en-US');
+        console.log('🇺🇸 US English voices found:', usEnglishVoices.length, usEnglishVoices.map(v => v.name));
+        
+        let selectedVoice = 
+          // 1st priority: Local US English voice (most natural)
+          voices.find(v => v.lang === 'en-US' && v.localService) ||
+          // 2nd priority: ANY US English voice
+          voices.find(v => v.lang === 'en-US') ||
+          // 3rd priority: Fallback to first voice
+          voices[0];
+        
+        console.log('🗣️ Selected voice:', selectedVoice?.name, '| Lang:', selectedVoice?.lang, '| Local:', selectedVoice?.localService);
+        
+        if (selectedVoice) {
+          speak(data.text, { 
+            voice: selectedVoice,
+            lang: 'en-US',
+            rate: 1.0
+          }).catch(err => {
+            console.error('❌ TTS error:', err);
+          });
+        } else {
+          console.error('❌ No voice available!');
+        }
       } else {
         console.log('⚠️ TTS not playing:', {
           hasUseTTS: !!data.useTTS,
@@ -1074,6 +1151,17 @@ export default function SwarmPage() {
   const handleRoleChange = (newRole: string) => {
     setSelectedRole(newRole);
     selectedRoleRef.current = newRole; // Update ref immediately for socket listeners
+    
+    // Unlock TTS for mobile browsers when selecting a group role
+    if (newRole.startsWith('group-') && isSupported) {
+      console.log('🔓 Unlocking TTS for mobile browser...');
+      // Speak a silent/very short utterance to unlock audio
+      // This must happen in response to user gesture (clicking role selector)
+      speak('', { volume: 0 }).catch(err => {
+        console.log('TTS unlock attempt:', err);
+      });
+    }
+    
     if (socket) {
       // Notify server of role change
       socket.emit('change-role', {
@@ -1150,9 +1238,16 @@ export default function SwarmPage() {
         }]);
       }
       
+      // Add to message history if not duplicate
+      const trimmedMessage = liveMessageInput.trim();
+      if (trimmedMessage && !sentMessageHistory.includes(trimmedMessage)) {
+        setSentMessageHistory(prev => [trimmedMessage, ...prev]); // Add to beginning
+      }
+      
       // Clear input and preset after sending
       setLiveMessageInput('');
       setMediaPreset('');
+      setShowHistoryDropdown(false);
     }
   };
 
@@ -1163,6 +1258,29 @@ export default function SwarmPage() {
   useEffect(() => {
     scrollLiveToBottom();
   }, [liveMessages]);
+
+  // Close history dropdown on click outside or Escape
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (showHistoryDropdown && !target.closest('[data-history-container]')) {
+        setShowHistoryDropdown(false);
+      }
+    };
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showHistoryDropdown) {
+        setShowHistoryDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showHistoryDropdown]);
 
   // Cleanup socket on unmount
   useEffect(() => {
@@ -1176,6 +1294,17 @@ export default function SwarmPage() {
   const handleRoleSelection = (role: string) => {
     setSelectedRole(role);
     selectedRoleRef.current = role; // Initialize ref
+    
+    // Unlock TTS for mobile browsers when selecting a group role
+    if (role.startsWith('group-') && isSupported) {
+      console.log('🔓 Unlocking TTS for mobile browser on initial role selection...');
+      // Speak a silent/very short utterance to unlock audio
+      // This must happen in response to user gesture (clicking role button)
+      speak('', { volume: 0 }).catch(err => {
+        console.log('TTS unlock attempt:', err);
+      });
+    }
+    
     connectToSwarm(nickname, role);
   };
 
@@ -1282,145 +1411,101 @@ export default function SwarmPage() {
             
             {/* Only showing Live Swarm chat now */}
             <ChatContainer>
-                {/* Hide top bar for multiview */}
-                {selectedRole !== 'multiview' && (
-                  <>
-                    <RoleDisplayBar>
-                      <HomeLink href="/">
-                        warm
-                        <LogoImage 
-                          src="/warmswarm-logo-transparent.png" 
-                          alt="WarmSwarm Logo"
-                        />
-                        swarm
-                      </HomeLink>
-                      <RoleDisplayText>
-                        Test Swarm
-                      </RoleDisplayText>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-                        <RoleSelect
-                          value={selectedRole}
-                          onChange={(e) => handleRoleChange(e.target.value)}
-                          disabled={!socket}
-                        >
-                          <option value="sender">Sender</option>
-                          <option value="group-1">Group 1</option>
-                          <option value="group-2">Group 2</option>
-                          <option value="group-3">Group 3</option>
-                          <option value="group-4">Group 4</option>
-                          <option value="multiview">MultiView</option>
-                        </RoleSelect>
-                        <InfoIcon onClick={() => setShowInfoPopup(!showInfoPopup)}>
-                          ℹ️
-                        </InfoIcon>
-                        {showInfoPopup && (
-                          <>
-                            <InfoPopupOverlay onClick={() => setShowInfoPopup(false)} />
-                            <InfoPopup>
-                              <h3>About Roles</h3>
-                              <p><strong>Sender:</strong> Send media to specific groups</p>
-                              <p><strong>Groups:</strong> Receive and view messages from the sender</p>
-                              <ul>
-                                <li>Group 1-4: Individual channels</li>
-                                <li>Sender can broadcast to all, even/odd, or specific groups</li>
-                              </ul>
-                            </InfoPopup>
-                          </>
-                        )}
-                      </div>
-                    </RoleDisplayBar>
-
-                    {/* Group Count Bar - shows how many people in each group */}
-                    {selectedRole === 'sender' && (
-                      <GroupCountBar>
-                        <GroupCount>Group1: <span className="count">({groupCounts['group-1']})</span></GroupCount>
-                        <GroupCount>Group2: <span className="count">({groupCounts['group-2']})</span></GroupCount>
-                        <GroupCount>Group3: <span className="count">({groupCounts['group-3']})</span></GroupCount>
-                        <GroupCount>Group4: <span className="count">({groupCounts['group-4']})</span></GroupCount>
-                      </GroupCountBar>
+                {/* Top navigation bar - shown for ALL roles */}
+                <RoleDisplayBar>
+                  <HomeLink href="/">
+                    warm
+                    <LogoImage 
+                      src="/warmswarm-logo-transparent.png" 
+                      alt="WarmSwarm Logo"
+                    />
+                    swarm
+                  </HomeLink>
+                  <RoleDisplayText>
+                    Test Swarm
+                  </RoleDisplayText>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
+                    <RoleSelect
+                      value={selectedRole}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                      disabled={!socket}
+                    >
+                      <option value="sender">Sender</option>
+                      <option value="group-1">Group 1</option>
+                      <option value="group-2">Group 2</option>
+                      <option value="group-3">Group 3</option>
+                      <option value="group-4">Group 4</option>
+                      <option value="multiview">MultiView</option>
+                    </RoleSelect>
+                    <InfoIcon onClick={() => setShowInfoPopup(!showInfoPopup)}>
+                      ℹ️
+                    </InfoIcon>
+                    {showInfoPopup && (
+                      <>
+                        <InfoPopupOverlay onClick={() => setShowInfoPopup(false)} />
+                        <InfoPopup>
+                          <h3>About Roles</h3>
+                          <p><strong>Sender:</strong> Send media to specific groups</p>
+                          <p><strong>Groups:</strong> Receive and view messages from the sender</p>
+                          <ul>
+                            <li>Group 1-4: Individual channels</li>
+                            <li>Sender can broadcast to all, even/odd, or specific groups</li>
+                          </ul>
+                        </InfoPopup>
+                      </>
                     )}
-                  </>
+                  </div>
+                </RoleDisplayBar>
+
+                {/* Group Count Bar - shows how many people in each group (sender only) */}
+                {selectedRole === 'sender' && (
+                  <GroupCountBar>
+                    <GroupCount>Group1: <span className="count">({groupCounts['group-1']})</span></GroupCount>
+                    <GroupCount>Group2: <span className="count">({groupCounts['group-2']})</span></GroupCount>
+                    <GroupCount>Group3: <span className="count">({groupCounts['group-3']})</span></GroupCount>
+                    <GroupCount>Group4: <span className="count">({groupCounts['group-4']})</span></GroupCount>
+                  </GroupCountBar>
                 )}
 
                 {/* Fullscreen message display for groups */}
-                {selectedRole === 'multiview' ? (
-                  <MultiviewGrid>
-                    <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#d63384'}>
-                      <MultiviewLabel>Group 1</MultiviewLabel>
-                      {multiviewMessages['group-1'] && (
-                        <MultiviewText>{multiviewMessages['group-1'].text}</MultiviewText>
-                      )}
-                    </MultiviewCell>
-                    <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#dc2626'}>
-                      <MultiviewLabel>Group 2</MultiviewLabel>
-                      {multiviewMessages['group-2'] && (
-                        <MultiviewText>{multiviewMessages['group-2'].text}</MultiviewText>
-                      )}
-                    </MultiviewCell>
-                    <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#f59e0b'}>
-                      <MultiviewLabel>Group 3</MultiviewLabel>
-                      {multiviewMessages['group-3'] && (
-                        <MultiviewText>{multiviewMessages['group-3'].text}</MultiviewText>
-                      )}
-                    </MultiviewCell>
-                    <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#10b981'}>
-                      <MultiviewLabel>Group 4</MultiviewLabel>
-                      {multiviewMessages['group-4'] && (
-                        <MultiviewText>{multiviewMessages['group-4'].text}</MultiviewText>
-                      )}
-                    </MultiviewCell>
-                  </MultiviewGrid>
-                ) : selectedRole !== 'sender' && currentFullscreenMessage && (
-                  <FullscreenMessage $bgColor={currentFullscreenMessage.color}>
-                    <FullscreenText>{currentFullscreenMessage.text}</FullscreenText>
-                  </FullscreenMessage>
-                )}
-
-                {/* Hide chat messages for multiview */}
-                {selectedRole !== 'multiview' && (
-                  <LiveMessagesArea>
-                    {liveMessages.length === 0 ? (
-                      <PlaceholderText>
-                        <strong>
-                          {selectedRole === 'sender' ? '📡 Sender Console' : '📺 Receiver Viewer'}
-                        </strong>
-                        {selectedRole === 'sender' ? (
-                          <>
-                            Use the controls below to broadcast messages to specific receivers.
-                            <br /><br />
-                            • Select target audience (All, Even, Odd, or specific receiver)
-                            <br />• Type your message and press Send
-                            <br />• Messages will appear here as confirmation
-                          </>
-                        ) : (
-                          <>
-                            Waiting for messages from the sender...
-                            <br /><br />
-                            You will receive:
-                            <br />• Messages sent to All
-                            <br />• Messages sent to your specific receiver number
-                            <br />• Messages sent to Even/Odd groups (if applicable)
-                          </>
+                {(selectedRole === 'multiview' || selectedRole === 'sender') ? (
+                  <MultiviewContainer>
+                    <MultiviewGrid>
+                      <MultiviewCell $bgColor={multiviewMessages['group-1']?.color || '#d63384'}>
+                        <MultiviewLabel>Group 1</MultiviewLabel>
+                        {multiviewMessages['group-1'] && (
+                          <MultiviewText>{multiviewMessages['group-1'].text}</MultiviewText>
                         )}
-                      </PlaceholderText>
-                    ) : (
-                      <>
-                        {liveMessages.map((msg, index) => (
-                          msg.socketId === 'system' ? (
-                            <SystemMessage key={index}>{msg.message}</SystemMessage>
-                          ) : (
-                            <LiveMessage key={index}>
-                              <LiveMessageRole>{msg.role || selectedRole}</LiveMessageRole>
-                              <LiveMessageContent>{msg.message}</LiveMessageContent>
-                              <LiveMessageTime>{formatTime(msg.timestamp)}</LiveMessageTime>
-                            </LiveMessage>
-                          )
-                        ))}
-                        <div ref={liveMessagesEndRef} />
-                      </>
+                      </MultiviewCell>
+                      <MultiviewCell $bgColor={multiviewMessages['group-2']?.color || '#dc2626'}>
+                        <MultiviewLabel>Group 2</MultiviewLabel>
+                        {multiviewMessages['group-2'] && (
+                          <MultiviewText>{multiviewMessages['group-2'].text}</MultiviewText>
+                        )}
+                      </MultiviewCell>
+                      <MultiviewCell $bgColor={multiviewMessages['group-3']?.color || '#f59e0b'}>
+                        <MultiviewLabel>Group 3</MultiviewLabel>
+                        {multiviewMessages['group-3'] && (
+                          <MultiviewText>{multiviewMessages['group-3'].text}</MultiviewText>
+                        )}
+                      </MultiviewCell>
+                      <MultiviewCell $bgColor={multiviewMessages['group-4']?.color || '#10b981'}>
+                        <MultiviewLabel>Group 4</MultiviewLabel>
+                        {multiviewMessages['group-4'] && (
+                          <MultiviewText>{multiviewMessages['group-4'].text}</MultiviewText>
+                        )}
+                      </MultiviewCell>
+                    </MultiviewGrid>
+                  </MultiviewContainer>
+                ) : selectedRole.startsWith('group-') ? (
+                  <FullscreenMessage $bgColor={currentFullscreenMessage?.color || '#667eea'}>
+                    {currentFullscreenMessage && (
+                      <FullscreenText>{currentFullscreenMessage.text}</FullscreenText>
                     )}
-                  </LiveMessagesArea>
-                )}
+                  </FullscreenMessage>
+                ) : null}
+
+                {/* No chat messages area for groups - they only see fullscreen messages */}
                 
                 {selectedRole === 'sender' && (
                   <MediaControlBar>
@@ -1473,9 +1558,26 @@ export default function SwarmPage() {
                       <option value="4">Group 4</option>
                     </RoleSelect>
 
-                    {/* For text or TTS: show input and send button */}
+                    {/* For text or TTS: show input with history dropdown and send button */}
                     {(mediaType === 'text' || mediaType === 'tts') && (
-                      <MediaInputWrapper>
+                      <MediaInputWrapper data-history-container>
+                        {/* History dropdown */}
+                        {showHistoryDropdown && sentMessageHistory.length > 0 && (
+                          <HistoryDropdown>
+                            {sentMessageHistory.map((msg, index) => (
+                              <HistoryItem
+                                key={index}
+                                onClick={() => {
+                                  setLiveMessageInput(msg);
+                                  setShowHistoryDropdown(false);
+                                }}
+                              >
+                                {msg}
+                              </HistoryItem>
+                            ))}
+                          </HistoryDropdown>
+                        )}
+                        
                         <MessageInput
                           type="text"
                           value={liveMessageInput}
@@ -1488,12 +1590,28 @@ export default function SwarmPage() {
                               }
                             }
                           }}
+                          onFocus={() => {
+                            if (sentMessageHistory.length > 0) {
+                              setShowHistoryDropdown(true);
+                            }
+                          }}
                           placeholder={
                             mediaType === 'text' ? 'Type message...' : 
                             'Type message (will be spoken)...'
                           }
                           disabled={!socket}
                         />
+                        
+                        {/* History toggle button */}
+                        <HistoryToggleButton
+                          type="button"
+                          onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
+                          disabled={sentMessageHistory.length === 0}
+                          title={sentMessageHistory.length > 0 ? 'Show message history' : 'No history yet'}
+                        >
+                          ↑
+                        </HistoryToggleButton>
+                        
                         <SmallSendButton
                           type="button"
                           onClick={handleSendLiveMessage}
