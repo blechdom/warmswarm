@@ -277,6 +277,10 @@ function emitGroupCounts(swarmId) {
   console.log(`[GROUP COUNTS] ${swarmId}:`, counts);
 }
 
+// Store latest canvas state for each group in each swarm
+// Structure: { 'swarmId:group-1': { imageData, timestamp }, ... }
+const canvasStates = new Map();
+
 io.on('connection', (socket) => {
   console.log('✅ Client connected:', socket.id, '| Transport:', socket.conn.transport.name);
   
@@ -286,29 +290,63 @@ io.on('connection', (socket) => {
 
   // Join swarm session
   socket.on('join-swarm', ({ swarmId, nickname, role = 'all' }) => {
+    console.log(`\n========================================`);
     console.log(`[JOIN] ${nickname} joining swarm ${swarmId} with role ${role}`);
+    console.log(`[JOIN] Socket ID: ${socket.id}`);
     
     // Join main swarm room
     socket.join(swarmId);
-    console.log(`  - Joined main room: ${swarmId}`);
+    console.log(`  ✓ Joined main room: ${swarmId}`);
     
     // Join role-based room
     const roleRoom = `${swarmId}:${role}`;
     socket.join(roleRoom);
-    console.log(`  - Joined role room: ${roleRoom}`);
+    console.log(`  ✓ Joined role room: ${roleRoom}`);
     
-    // If multiview or sender, join all group rooms to receive all messages
-    if (role === 'multiview' || role === 'sender') {
-      ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
-        socket.join(`${swarmId}:${groupRole}`);
-        console.log(`  - Joined group room for ${role}: ${swarmId}:${groupRole}`);
+    // Verify socket is in the room
+    const roomCheck = io.sockets.adapter.rooms.get(roleRoom);
+    console.log(`  ✓ Room ${roleRoom} now has ${roomCheck ? roomCheck.size : 0} members`);
+    console.log(`  ✓ Room members:`, Array.from(roomCheck || []));
+    
+    // Handle shared canvas
+    if (role === 'shared') {
+      // Send current shared canvas state to the newly joined client
+      const stateKey = `${swarmId}:shared`;
+      const state = canvasStates.get(stateKey);
+      if (state) {
+        socket.emit('initial-canvas-states', { shared: state });
+        console.log(`  - Sent shared canvas state to ${nickname}`);
+      }
+    } else {
+      // If multiview or sender, join all group rooms to receive all messages
+      if (role === 'multiview' || role === 'sender') {
+        ['group-1', 'group-2', 'group-3', 'group-4'].forEach(groupRole => {
+          socket.join(`${swarmId}:${groupRole}`);
+          console.log(`  - Joined group room for ${role}: ${swarmId}:${groupRole}`);
+        });
+      }
+      
+      // Send current canvas states for all groups to the newly joined client
+      const allGroups = ['group-1', 'group-2', 'group-3', 'group-4'];
+      const currentStates = {};
+      allGroups.forEach(group => {
+        const stateKey = `${swarmId}:${group}`;
+        const state = canvasStates.get(stateKey);
+        if (state) {
+          currentStates[group] = state;
+        }
       });
-    }
-    
-    // Also join "all" room if not already in it
-    if (role !== 'all') {
-      socket.join(`${swarmId}:all`);
-      console.log(`  - Joined all room: ${swarmId}:all`);
+      
+      if (Object.keys(currentStates).length > 0) {
+        socket.emit('initial-canvas-states', currentStates);
+        console.log(`  - Sent ${Object.keys(currentStates).length} existing canvas state(s) to ${nickname}`);
+      }
+      
+      // Also join "all" room if not already in it
+      if (role !== 'all') {
+        socket.join(`${swarmId}:all`);
+        console.log(`  - Joined all room: ${swarmId}:all`);
+      }
     }
     
     socketToSwarm.set(socket.id, swarmId);
@@ -328,6 +366,28 @@ io.on('connection', (socket) => {
       });
     
     socket.emit('swarm-participants', participants);
+    
+    // For shared canvas, emit participant count to all in the room AFTER joining
+    if (role === 'shared') {
+      // Use setTimeout to ensure the socket has fully joined before counting
+      setTimeout(() => {
+        const roomSockets = io.sockets.adapter.rooms.get(roleRoom);
+        const participantCount = roomSockets ? roomSockets.size : 0;
+        
+        console.log(`  📊 Calculating participant count for ${roleRoom}:`);
+        console.log(`     - Room exists: ${!!roomSockets}`);
+        console.log(`     - Participant count: ${participantCount}`);
+        console.log(`     - Members:`, Array.from(roomSockets || []));
+        
+        // Broadcast to room
+        io.to(roleRoom).emit('participant-count', participantCount);
+        console.log(`  📤 Broadcasted participant-count to room ${roleRoom}`);
+        
+        // Also send directly to this socket to ensure they get it
+        socket.emit('participant-count', participantCount);
+        console.log(`  📤 Sent participant-count directly to ${socket.id}`);
+      }, 100);
+    }
     
     // Emit updated group counts to all senders
     emitGroupCounts(swarmId);
@@ -454,29 +514,69 @@ io.on('connection', (socket) => {
   socket.on('send-drawing', ({ swarmId, target, imageData, timestamp }) => {
     const user = socketToUser.get(socket.id);
     if (user && swarmId) {
-      const senderGroup = user.role; // group-1, group-2, etc.
+      const senderGroup = user.role; // group-1, group-2, etc., or 'shared'
       
-      // For collaborative drawing, broadcast to all groups except sender
-      const allGroups = ['group-1', 'group-2', 'group-3', 'group-4'];
-      
-      allGroups.forEach(groupRole => {
-        // Send to all groups (they'll filter out their own)
-        const targetRoom = `${swarmId}:${groupRole}`;
-        const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
+      // Handle shared canvas differently
+      if (senderGroup === 'shared') {
+        // Store the latest canvas state for shared canvas
+        const stateKey = `${swarmId}:shared`;
+        canvasStates.set(stateKey, {
+          imageData: imageData,
+          timestamp: timestamp,
+          fromGroup: 'shared'
+        });
+        console.log(`  [STATE] Saved shared canvas state for ${stateKey}`);
+        
+        // Broadcast to everyone in the shared room (including sender for real-time updates)
+        const sharedRoom = `${swarmId}:shared`;
+        const roomSockets = io.sockets.adapter.rooms.get(sharedRoom);
         const numMembers = roomSockets ? roomSockets.size : 0;
         
-        if (numMembers > 0) {
-          io.to(targetRoom).emit('receive-drawing', {
-            imageData: imageData,
-            timestamp: timestamp,
-            fromGroup: senderGroup, // Include sender's group
-            senderId: socket.id
-          });
-          console.log(`  [DRAWING] Sending from ${senderGroup} to ${targetRoom} (${numMembers} clients)`);
-        }
-      });
-      
-      console.log(`[DRAWING] ${user.nickname} (${senderGroup}) broadcasted drawing to all`);
+        console.log(`  [SHARED DRAWING] Broadcasting to ${sharedRoom} (${numMembers} members)`);
+        console.log(`  [SHARED DRAWING] Room sockets:`, Array.from(roomSockets || []));
+        console.log(`  [SHARED DRAWING] Sender ID: ${socket.id}`);
+        
+        io.to(sharedRoom).emit('receive-drawing', {
+          imageData: imageData,
+          timestamp: timestamp,
+          fromGroup: 'shared',
+          senderId: socket.id
+        });
+        
+        console.log(`  [SHARED DRAWING] Broadcasted drawing from ${user.nickname}`);
+      } else {
+        // Original group-based drawing logic
+        // Store the latest canvas state for this group
+        const stateKey = `${swarmId}:${senderGroup}`;
+        canvasStates.set(stateKey, {
+          imageData: imageData,
+          timestamp: timestamp,
+          fromGroup: senderGroup
+        });
+        console.log(`  [STATE] Saved canvas state for ${stateKey}`);
+        
+        // For collaborative drawing, broadcast to all groups except sender
+        const allGroups = ['group-1', 'group-2', 'group-3', 'group-4'];
+        
+        allGroups.forEach(groupRole => {
+          // Send to all groups (they'll filter out their own)
+          const targetRoom = `${swarmId}:${groupRole}`;
+          const roomSockets = io.sockets.adapter.rooms.get(targetRoom);
+          const numMembers = roomSockets ? roomSockets.size : 0;
+          
+          if (numMembers > 0) {
+            io.to(targetRoom).emit('receive-drawing', {
+              imageData: imageData,
+              timestamp: timestamp,
+              fromGroup: senderGroup, // Include sender's group
+              senderId: socket.id
+            });
+            console.log(`  [DRAWING] Sending from ${senderGroup} to ${targetRoom} (${numMembers} clients)`);
+          }
+        });
+        
+        console.log(`[DRAWING] ${user.nickname} (${senderGroup}) broadcasted drawing to all`);
+      }
     }
   });
 
@@ -544,12 +644,38 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Request participant count manually
+  socket.on('request-participant-count', ({ swarmId, role }) => {
+    const roleRoom = `${swarmId}:${role}`;
+    const roomSockets = io.sockets.adapter.rooms.get(roleRoom);
+    const participantCount = roomSockets ? roomSockets.size : 0;
+    
+    console.log(`[REQUEST] Participant count for ${roleRoom}: ${participantCount}`);
+    console.log(`[REQUEST] Room members:`, Array.from(roomSockets || []));
+    console.log(`[REQUEST] Requesting socket: ${socket.id}`);
+    
+    // Send to everyone in the room
+    io.to(roleRoom).emit('participant-count', participantCount);
+  });
+
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
     
     const swarmId = socketToSwarm.get(socket.id);
     const user = socketToUser.get(socket.id);
+    
+    // If this was a shared canvas participant, update participant count BEFORE removing
+    if (user && user.role === 'shared' && swarmId) {
+      // Small delay to ensure socket has left room before counting
+      setTimeout(() => {
+        const roleRoom = `${swarmId}:shared`;
+        const roomSockets = io.sockets.adapter.rooms.get(roleRoom);
+        const participantCount = roomSockets ? roomSockets.size : 0;
+        io.to(roleRoom).emit('participant-count', participantCount);
+        console.log(`  - Updated participant count (${participantCount}) for ${roleRoom} after disconnect`);
+      }, 100);
+    }
     
     if (swarmId && swarmSessions.has(swarmId)) {
       swarmSessions.get(swarmId).delete(socket.id);

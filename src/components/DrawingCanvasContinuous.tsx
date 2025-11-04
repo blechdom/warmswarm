@@ -32,7 +32,7 @@ interface DrawingCanvasProps {
   onStatusChange?: (status: string) => void;
 }
 
-export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend, onStatusChange }: DrawingCanvasProps) {
+export default function DrawingCanvasContinuous({ socket, targetAudience, swarmId, onSend, onStatusChange }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
@@ -169,13 +169,7 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     if (isTyping && textPosition) {
       ctx.fillStyle = color;
       const fontWeight = isBold ? 'bold' : 'normal';
-      const fontString = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
-      ctx.font = fontString;
-      
-      // Debug: log font being used (remove after testing)
-      if (currentText && currentText.length === 1) {
-        console.log('Drawing with font:', fontString, '-> actual:', ctx.font);
-      }
+      ctx.font = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
       
       // Draw text if any
       if (currentText) {
@@ -205,9 +199,9 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
   useEffect(() => {
     if (onStatusChange) {
       if (isTextMode) {
-        onStatusChange('✍️ Click to place text, then type');
+        onStatusChange('✍️ Continuous text mode - live typing');
       } else {
-        onStatusChange('✏️ Draw mode - click and drag to draw');
+        onStatusChange('✏️ Continuous draw mode - auto-sends');
       }
     }
   }, [isTextMode, onStatusChange]);
@@ -235,6 +229,21 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
               fontFamily: fontFamily,
               isBold: isBold
             }]);
+            
+            // Auto-send the finalized text in continuous mode
+            setTimeout(() => {
+              const canvas = canvasRef.current;
+              if (canvas && socket && socket.connected) {
+                const imageData = canvas.toDataURL('image/png');
+                socket.emit('send-drawing', {
+                  swarmId: swarmId,
+                  target: targetAudience,
+                  imageData: imageData,
+                  timestamp: Date.now()
+                });
+                onSend?.();
+              }
+            }, 10);
           }
           setCurrentText('');
           setTextPosition(null);
@@ -250,11 +259,41 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
         } else if (e.key === 'Backspace') {
           e.preventDefault();
           setCurrentText(prev => prev.slice(0, -1));
+          
+          // Auto-send canvas after backspace in continuous mode
+          setTimeout(() => {
+            const canvas = canvasRef.current;
+            if (canvas && socket && socket.connected) {
+              const imageData = canvas.toDataURL('image/png');
+              socket.emit('send-drawing', {
+                swarmId: swarmId,
+                target: targetAudience,
+                imageData: imageData,
+                timestamp: Date.now()
+              });
+            }
+          }, 10); // Small delay to allow re-render
+          
           return;
         } else if (e.key.length === 1) {
           // Regular character
           e.preventDefault();
           setCurrentText(prev => prev + e.key);
+          
+          // Auto-send canvas after each character in continuous mode
+          setTimeout(() => {
+            const canvas = canvasRef.current;
+            if (canvas && socket && socket.connected) {
+              const imageData = canvas.toDataURL('image/png');
+              socket.emit('send-drawing', {
+                swarmId: swarmId,
+                target: targetAudience,
+                imageData: imageData,
+                timestamp: Date.now()
+              });
+            }
+          }, 10); // Small delay to allow re-render
+          
           return;
         }
         return;
@@ -263,23 +302,18 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
       // Ctrl+Z or Cmd+Z = Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
-        if (paths.length > 0) {
-          const newPaths = paths.slice(0, -1);
-          setPaths(newPaths);
-        }
+        undo(); // Use undo function which auto-sends
         return;
       }
       
       // Backspace or Delete = Clear (only if canvas has content)
       if ((e.key === 'Backspace' || e.key === 'Delete') && (paths.length > 0 || texts.length > 0)) {
         e.preventDefault();
-        setPaths([]);
-        setTexts([]);
-        setCurrentPath([]);
+        clearCanvas(); // Use clearCanvas function which auto-sends
         return;
       }
       
-      // Ctrl+Enter = Send drawing (only if canvas has content and socket is connected)
+      // Ctrl+Enter = Manually resend current drawing (continuous mode)
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && (paths.length > 0 || texts.length > 0) && socket && socket.connected) {
         e.preventDefault();
         sendDrawing();
@@ -321,6 +355,21 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
           fontFamily: fontFamily,
           isBold: isBold
         }]);
+        
+        // Auto-send the finalized text in continuous mode
+        setTimeout(() => {
+          const canvas = canvasRef.current;
+          if (canvas && socket && socket.connected) {
+            const imageData = canvas.toDataURL('image/png');
+            socket.emit('send-drawing', {
+              swarmId: swarmId,
+              target: targetAudience,
+              imageData: imageData,
+              timestamp: Date.now()
+            });
+            onSend?.();
+          }
+        }, 10);
       }
       
       // Start new text at click position
@@ -346,8 +395,25 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
 
   const endDrawing = () => {
     if (isDrawing && currentPath.length > 0) {
-      setPaths([...paths, { points: currentPath, color: color, width: lineWidth }]);
+      const newPath = { points: currentPath, color: color, width: lineWidth };
+      setPaths([...paths, newPath]);
       setCurrentPath([]);
+      
+      // Automatically send the completed stroke immediately (continuous mode)
+      if (socket && socket.connected) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const imageData = canvas.toDataURL('image/png');
+          console.log('📤 Auto-sending stroke to', targetAudience);
+          socket.emit('send-drawing', {
+            swarmId: swarmId,
+            target: targetAudience,
+            imageData: imageData,
+            timestamp: Date.now()
+          });
+          onSend?.();
+        }
+      }
     }
     setIsDrawing(false);
   };
@@ -386,7 +452,24 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     setCurrentText('');
     setTextPosition(null);
     setIsTyping(false);
-    // The useEffect will handle redrawing (with empty paths)
+    
+    // Send cleared canvas immediately (continuous mode)
+    if (socket && socket.connected) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        // Wait a tick for the canvas to clear, then send
+        setTimeout(() => {
+          const imageData = canvas.toDataURL('image/png');
+          console.log('📤 Sending cleared canvas');
+          socket.emit('send-drawing', {
+            swarmId: swarmId,
+            target: targetAudience,
+            imageData: imageData,
+            timestamp: Date.now()
+          });
+        }, 50);
+      }
+    }
   };
 
   const undo = () => {
@@ -397,6 +480,23 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     } else if (paths.length > 0) {
       // Remove last path
       setPaths(prev => prev.slice(0, -1));
+    }
+    
+    // Send updated canvas after undo (continuous mode)
+    if (socket && socket.connected) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        setTimeout(() => {
+          const imageData = canvas.toDataURL('image/png');
+          console.log('📤 Sending after undo');
+          socket.emit('send-drawing', {
+            swarmId: swarmId,
+            target: targetAudience,
+            imageData: imageData,
+            timestamp: Date.now()
+          });
+        }, 50);
+      }
     }
   };
 
@@ -415,7 +515,7 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     // Convert canvas to base64 image (PNG for better quality with white background)
     const imageData = canvas.toDataURL('image/png');
     
-    console.log('📤 Sending drawing to', targetAudience, `(${Math.round(imageData.length / 1024)}KB)`);
+    console.log('📤 Manually sending drawing to', targetAudience, `(${Math.round(imageData.length / 1024)}KB)`);
     
     // Send via socket
     socket.emit('send-drawing', {
@@ -428,8 +528,7 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     // Call onSend callback if provided
     onSend?.();
     
-    // Clear canvas after sending
-    clearCanvas();
+    // DO NOT clear canvas after sending in continuous mode
   };
 
   return (
@@ -637,9 +736,9 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
             flex: 1,
             fontSize: '1.1rem'
           }}
-          title="Send drawing to all groups (Ctrl+Enter)"
+          title="Manually resend current drawing (auto-sends on each change)"
         >
-          📤 Send Drawing
+          🔄 Resend Canvas
           {socket && !socket.connected && ' (Connecting...)'}
         </button>
       </div>

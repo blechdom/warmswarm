@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import DrawingCanvas from '@/components/DrawingCanvas';
+import DrawingCanvasContinuous from '@/components/DrawingCanvasContinuous';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -209,7 +209,7 @@ const BackButton = styled.button`
   }
 `;
 
-export default function DrawPage() {
+export default function DrawContinuousPage() {
   const [selectedGroup, setSelectedGroup] = useState('');
   const [socket, setSocket] = useState<Socket | null>(null);
   const [receivedDrawings, setReceivedDrawings] = useState<{
@@ -223,10 +223,10 @@ export default function DrawPage() {
     'group-3': null,
     'group-4': null
   });
-  const [canvasStatus, setCanvasStatus] = useState('✏️ Start drawing on the canvas');
+  const [canvasStatus, setCanvasStatus] = useState('✏️ Continuous mode - each change auto-sends');
   const clearTimeoutIdsRef = useRef<Record<string, NodeJS.Timeout>>({});
 
-  const swarmId = 'standard-drawing-swarm';
+  const swarmId = 'continuous-drawing-swarm';
 
   const groupColors = {
     'group-1': '#d63384', // pink
@@ -358,7 +358,7 @@ export default function DrawPage() {
   if (!selectedGroup) {
     return (
       <RoleSelector>
-        <Title style={{ fontSize: '2.5rem', textAlign: 'center' }}>🎨 Collaborative Drawing</Title>
+        <Title style={{ fontSize: '2.5rem', textAlign: 'center' }}>🎨 Collaborative Drawing (Continuous)</Title>
         <PlaceholderText style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.9)' }}>
           Select your group (4 participants max)
         </PlaceholderText>
@@ -387,7 +387,7 @@ export default function DrawPage() {
     <Container>
       <Header>
         <Title>
-          🎨 Collaborative Drawing - You are {selectedGroup.replace('-', ' ').toUpperCase()}
+          🎨 Collaborative Drawing (Continuous) - You are {selectedGroup.replace('-', ' ').toUpperCase()}
         </Title>
         <BackButton onClick={() => window.location.href = '/demos'}>
           ← Back
@@ -430,7 +430,7 @@ export default function DrawPage() {
             display: 'flex', 
             minHeight: 0,
           }} className="canvas-wrapper">
-            <DrawingCanvas
+            <DrawingCanvasContinuous
               socket={socket}
               targetAudience="all"
               swarmId={swarmId}
@@ -512,3 +512,4 @@ export default function DrawPage() {
     </Container>
   );
 }
+

@@ -49,9 +49,8 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
   const [currentText, setCurrentText] = useState('');
   const [textPosition, setTextPosition] = useState<Point | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [fontFamily, setFontFamily] = useState('Arial, sans-serif');
+  const [fontFamily, setFontFamily] = useState('Arial');
   const [isBold, setIsBold] = useState(false);
-  const [cursorVisible, setCursorVisible] = useState(true);
 
   // Available colors and sizes
   const colors = [
@@ -75,8 +74,14 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
   ];
 
   const fonts = [
-    { name: 'Sans-Serif', value: 'sans-serif' },
-    { name: 'Serif', value: 'serif' },
+    'Arial',
+    'Helvetica',
+    'Times New Roman',
+    'Courier New',
+    'Georgia',
+    'Verdana',
+    'Comic Sans MS',
+    'Impact',
   ];
 
   // Initialize canvas dimensions once on mount and on resize
@@ -166,40 +171,17 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     }
     
     // Draw current text being typed
-    if (isTyping && textPosition) {
+    if (isTyping && textPosition && currentText) {
       ctx.fillStyle = color;
       const fontWeight = isBold ? 'bold' : 'normal';
-      const fontString = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
-      ctx.font = fontString;
+      ctx.font = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
+      ctx.fillText(currentText, textPosition.x, textPosition.y);
       
-      // Debug: log font being used (remove after testing)
-      if (currentText && currentText.length === 1) {
-        console.log('Drawing with font:', fontString, '-> actual:', ctx.font);
-      }
-      
-      // Draw text if any
-      if (currentText) {
-        ctx.fillText(currentText, textPosition.x, textPosition.y);
-      }
-      
-      // Draw blinking cursor
-      if (cursorVisible) {
-        const textWidth = currentText ? ctx.measureText(currentText).width : 0;
-        ctx.fillRect(textPosition.x + textWidth, textPosition.y - lineWidth * 2, 2, lineWidth * 3);
-      }
+      // Draw cursor
+      const textWidth = ctx.measureText(currentText).width;
+      ctx.fillRect(textPosition.x + textWidth, textPosition.y - lineWidth * 2, 2, lineWidth * 3);
     }
-  }, [paths, currentPath, texts, currentText, textPosition, isTyping, canvasKey, color, lineWidth, fontFamily, isBold, cursorVisible]);
-
-  // Blinking cursor effect
-  useEffect(() => {
-    if (!isTyping) return;
-    
-    const interval = setInterval(() => {
-      setCursorVisible(prev => !prev);
-    }, 500); // Blink every 500ms
-    
-    return () => clearInterval(interval);
-  }, [isTyping]);
+  }, [paths, currentPath, texts, currentText, textPosition, isTyping, canvasKey, color, lineWidth]);
 
   // Update status when mode changes
   useEffect(() => {
@@ -308,22 +290,8 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     
-    // If in text mode
+    // If in text mode, start typing at click position
     if (isTextMode) {
-      // If already typing, finish current text first
-      if (isTyping && currentText.trim()) {
-        setTexts(prev => [...prev, {
-          text: currentText,
-          x: textPosition!.x,
-          y: textPosition!.y,
-          color: color,
-          fontSize: lineWidth * 3,
-          fontFamily: fontFamily,
-          isBold: isBold
-        }]);
-      }
-      
-      // Start new text at click position
       const point = getCoordinates(e.nativeEvent);
       setTextPosition(point);
       setCurrentText('');
@@ -439,20 +407,34 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
         {/* Mode Toggle */}
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <button
-            onClick={() => setIsTextMode(!isTextMode)}
+            onClick={() => setIsTextMode(false)}
             style={{
               padding: '8px 16px',
-              background: 'rgba(255,255,255,0.3)',
-              border: '2px solid white',
+              background: !isTextMode ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
+              border: !isTextMode ? '2px solid white' : '1px solid rgba(255,255,255,0.3)',
               borderRadius: '6px',
               color: 'white',
               cursor: 'pointer',
               fontWeight: '600',
-              fontSize: '0.9rem',
-              minWidth: '100px'
+              fontSize: '0.9rem'
             }}
           >
-            {isTextMode ? '✍️ Text' : '✏️ Draw'}
+            ✏️ Draw
+          </button>
+          <button
+            onClick={() => setIsTextMode(true)}
+            style={{
+              padding: '8px 16px',
+              background: isTextMode ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
+              border: isTextMode ? '2px solid white' : '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '6px',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.9rem'
+            }}
+          >
+            ✍️ Text
           </button>
         </div>
         
@@ -498,8 +480,8 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
                 }}
               >
                 {fonts.map(font => (
-                  <option key={font.value} value={font.value} style={{ background: '#667eea', color: 'white' }}>
-                    {font.name}
+                  <option key={font} value={font} style={{ background: '#667eea', color: 'white' }}>
+                    {font}
                   </option>
                 ))}
               </select>

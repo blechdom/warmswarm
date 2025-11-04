@@ -149,6 +149,43 @@ const ActionDescription = styled.p`
   line-height: 1.5;
 `;
 
+const ActionCard = styled.div`
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 50px 30px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.225s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+const SubOptionLink = styled(Link)`
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: block;
+  text-align: center;
+  flex: 1;
+  min-width: 140px;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.35);
+    border-color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+`;
+
 const DemoSection = styled.div`
   text-align: center;
   margin-top: 40px;
@@ -205,13 +242,21 @@ export default function Home() {
             </ActionDescription>
           </LinkCard>
           
-          <LinkCard href="/draw">
+          <ActionCard>
             <ActionIcon>🎨</ActionIcon>
-            <ActionTitle>draw a swarm</ActionTitle>
-            <ActionDescription>
-              ✏️ collaborative drawing
-            </ActionDescription>
-          </LinkCard>
+            <ActionTitle>Draw Together</ActionTitle>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <SubOptionLink href="/draw">
+                📝 Draw-then-Send
+              </SubOptionLink>
+              <SubOptionLink href="/draw-continuous">
+                ⚡ Continuous
+              </SubOptionLink>
+            </div>
+            <SubOptionLink href="/draw-shared">
+              🖼️ Shared Canvas
+            </SubOptionLink>
+          </ActionCard>
           
           <LinkCard href="/templates">
             <ActionIcon>📋</ActionIcon>

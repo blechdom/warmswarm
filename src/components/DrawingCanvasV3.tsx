@@ -14,16 +14,6 @@ interface PathData {
   width: number;
 }
 
-interface TextData {
-  text: string;
-  x: number;
-  y: number;
-  color: string;
-  fontSize: number;
-  fontFamily: string;
-  isBold: boolean;
-}
-
 interface DrawingCanvasProps {
   socket: Socket | null;
   targetAudience: string;
@@ -32,26 +22,18 @@ interface DrawingCanvasProps {
   onStatusChange?: (status: string) => void;
 }
 
-export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend, onStatusChange }: DrawingCanvasProps) {
+export default function DrawingCanvasV3({ socket, targetAudience, swarmId, onSend, onStatusChange }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
   const [paths, setPaths] = useState<PathData[]>([]);
-  const [texts, setTexts] = useState<TextData[]>([]);
   const [canvasKey, setCanvasKey] = useState(0); // Use counter to force redraw on resize
+  const currentPathRef = useRef<Point[]>([]); // Store current path without triggering re-renders
+  const isDrawingRef = useRef(false);
   
   // Drawing settings
   const [color, setColor] = useState('#000000');
   const [lineWidth, setLineWidth] = useState(4); // Default to Medium
-  
-  // Text mode
-  const [isTextMode, setIsTextMode] = useState(false);
-  const [currentText, setCurrentText] = useState('');
-  const [textPosition, setTextPosition] = useState<Point | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const [fontFamily, setFontFamily] = useState('Arial, sans-serif');
-  const [isBold, setIsBold] = useState(false);
-  const [cursorVisible, setCursorVisible] = useState(true);
 
   // Available colors and sizes
   const colors = [
@@ -72,11 +54,6 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     { name: 'Extra Thick', value: 12 },
     { name: 'Very Thick', value: 18 },
     { name: 'Super Thick', value: 24 },
-  ];
-
-  const fonts = [
-    { name: 'Sans-Serif', value: 'sans-serif' },
-    { name: 'Serif', value: 'serif' },
   ];
 
   // Initialize canvas dimensions once on mount and on resize
@@ -128,7 +105,7 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     };
   }, []);
 
-  // Redraw canvas whenever paths, currentPath, texts, or canvas is reinitialized
+  // Redraw canvas whenever paths change or canvas is reinitialized
   useEffect(() => {
     if (canvasKey === 0) return; // Wait for initial setup
     
@@ -147,116 +124,24 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     
     // Redraw all completed paths (each with its own color and width)
     redrawCanvas(ctx, paths);
-    
-    // Draw all text elements
-    redrawTexts(ctx, texts);
-    
-    // Draw current path being drawn (with current color and width)
-    if (currentPath.length > 0) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(currentPath[0].x, currentPath[0].y);
-      for (let i = 1; i < currentPath.length; i++) {
-        ctx.lineTo(currentPath[i].x, currentPath[i].y);
-      }
-      ctx.stroke();
-    }
-    
-    // Draw current text being typed
-    if (isTyping && textPosition) {
-      ctx.fillStyle = color;
-      const fontWeight = isBold ? 'bold' : 'normal';
-      const fontString = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
-      ctx.font = fontString;
-      
-      // Debug: log font being used (remove after testing)
-      if (currentText && currentText.length === 1) {
-        console.log('Drawing with font:', fontString, '-> actual:', ctx.font);
-      }
-      
-      // Draw text if any
-      if (currentText) {
-        ctx.fillText(currentText, textPosition.x, textPosition.y);
-      }
-      
-      // Draw blinking cursor
-      if (cursorVisible) {
-        const textWidth = currentText ? ctx.measureText(currentText).width : 0;
-        ctx.fillRect(textPosition.x + textWidth, textPosition.y - lineWidth * 2, 2, lineWidth * 3);
-      }
-    }
-  }, [paths, currentPath, texts, currentText, textPosition, isTyping, canvasKey, color, lineWidth, fontFamily, isBold, cursorVisible]);
+  }, [paths, canvasKey]);
 
-  // Blinking cursor effect
-  useEffect(() => {
-    if (!isTyping) return;
-    
-    const interval = setInterval(() => {
-      setCursorVisible(prev => !prev);
-    }, 500); // Blink every 500ms
-    
-    return () => clearInterval(interval);
-  }, [isTyping]);
-
-  // Update status when mode changes
+  // Update status when paths change
   useEffect(() => {
     if (onStatusChange) {
-      if (isTextMode) {
-        onStatusChange('✍️ Click to place text, then type');
+      if (paths.length === 0) {
+        onStatusChange('✏️ Start drawing on the canvas');
       } else {
-        onStatusChange('✏️ Draw mode - click and drag to draw');
+        onStatusChange(`📝 ${paths.length} stroke${paths.length > 1 ? 's' : ''} drawn`);
       }
     }
-  }, [isTextMode, onStatusChange]);
+  }, [paths.length, onStatusChange]);
 
-  // Keyboard shortcuts and text input
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts if user is typing in an input/textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      
-      // Handle text input when in typing mode
-      if (isTyping && textPosition) {
-        if (e.key === 'Enter') {
-          // Finish typing
-          e.preventDefault();
-          if (currentText.trim()) {
-            setTexts(prev => [...prev, {
-              text: currentText,
-              x: textPosition.x,
-              y: textPosition.y,
-              color: color,
-              fontSize: lineWidth * 3,
-              fontFamily: fontFamily,
-              isBold: isBold
-            }]);
-          }
-          setCurrentText('');
-          setTextPosition(null);
-          setIsTyping(false);
-          return;
-        } else if (e.key === 'Escape') {
-          // Cancel typing
-          e.preventDefault();
-          setCurrentText('');
-          setTextPosition(null);
-          setIsTyping(false);
-          return;
-        } else if (e.key === 'Backspace') {
-          e.preventDefault();
-          setCurrentText(prev => prev.slice(0, -1));
-          return;
-        } else if (e.key.length === 1) {
-          // Regular character
-          e.preventDefault();
-          setCurrentText(prev => prev + e.key);
-          return;
-        }
         return;
       }
       
@@ -270,26 +155,38 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
         return;
       }
       
-      // Backspace or Delete = Clear (only if canvas has content)
-      if ((e.key === 'Backspace' || e.key === 'Delete') && (paths.length > 0 || texts.length > 0)) {
+      // Backspace or Delete = Clear (only if canvas has strokes)
+      if ((e.key === 'Backspace' || e.key === 'Delete') && paths.length > 0) {
         e.preventDefault();
         setPaths([]);
-        setTexts([]);
-        setCurrentPath([]);
+        currentPathRef.current = [];
         return;
       }
       
-      // Ctrl+Enter = Send drawing (only if canvas has content and socket is connected)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && (paths.length > 0 || texts.length > 0) && socket && socket.connected) {
+      // Enter = Send drawing (only if canvas has strokes and socket is connected)
+      if (e.key === 'Enter' && paths.length > 0 && socket && socket.connected) {
         e.preventDefault();
-        sendDrawing();
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const imageData = canvas.toDataURL('image/png');
+          console.log('📤 Sending drawing via Enter key');
+          socket.emit('send-drawing', {
+            swarmId: swarmId,
+            target: targetAudience,
+            imageData: imageData,
+            timestamp: Date.now()
+          });
+          onSend?.();
+          setPaths([]);
+          currentPathRef.current = [];
+        }
         return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [paths, texts, currentText, textPosition, isTyping, color, lineWidth, socket, swarmId, targetAudience, onSend]);
+  }, [paths, socket, swarmId, targetAudience, onSend]);
 
   const getCoordinates = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
@@ -307,48 +204,51 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) return;
     
-    // If in text mode
-    if (isTextMode) {
-      // If already typing, finish current text first
-      if (isTyping && currentText.trim()) {
-        setTexts(prev => [...prev, {
-          text: currentText,
-          x: textPosition!.x,
-          y: textPosition!.y,
-          color: color,
-          fontSize: lineWidth * 3,
-          fontFamily: fontFamily,
-          isBold: isBold
-        }]);
-      }
-      
-      // Start new text at click position
-      const point = getCoordinates(e.nativeEvent);
-      setTextPosition(point);
-      setCurrentText('');
-      setIsTyping(true);
-      return;
-    }
-    
+    isDrawingRef.current = true;
     setIsDrawing(true);
     const point = getCoordinates(e.nativeEvent);
-    setCurrentPath([point]);
+    currentPathRef.current = [point];
+    
+    // Start drawing path
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    if (!isDrawing || isTextMode) return;
+    if (!isDrawingRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!ctx) return;
     
     const point = getCoordinates(e.nativeEvent);
-    setCurrentPath(prev => [...prev, point]);
+    currentPathRef.current.push(point);
+    
+    // Draw immediately to canvas without waiting for state update
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
   };
 
   const endDrawing = () => {
-    if (isDrawing && currentPath.length > 0) {
-      setPaths([...paths, { points: currentPath, color: color, width: lineWidth }]);
-      setCurrentPath([]);
+    if (isDrawingRef.current && currentPathRef.current.length > 0) {
+      // Save the completed path to state
+      setPaths(prev => [...prev, { 
+        points: [...currentPathRef.current], 
+        color: color, 
+        width: lineWidth 
+      }]);
+      currentPathRef.current = [];
     }
+    isDrawingRef.current = false;
     setIsDrawing(false);
   };
 
@@ -369,34 +269,16 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     });
   };
 
-  const redrawTexts = (ctx: CanvasRenderingContext2D, allTexts: TextData[]) => {
-    // Redraw each text with its original properties
-    allTexts.forEach(textData => {
-      ctx.fillStyle = textData.color;
-      const fontWeight = textData.isBold ? 'bold' : 'normal';
-      ctx.font = `${fontWeight} ${textData.fontSize}px ${textData.fontFamily}`;
-      ctx.fillText(textData.text, textData.x, textData.y);
-    });
-  };
-
   const clearCanvas = () => {
     setPaths([]);
-    setTexts([]);
     setCurrentPath([]);
-    setCurrentText('');
-    setTextPosition(null);
-    setIsTyping(false);
     // The useEffect will handle redrawing (with empty paths)
   };
 
   const undo = () => {
-    // Undo last item (either path or text)
-    if (texts.length > 0) {
-      // Remove last text
-      setTexts(prev => prev.slice(0, -1));
-    } else if (paths.length > 0) {
-      // Remove last path
-      setPaths(prev => prev.slice(0, -1));
+    if (paths.length > 0) {
+      const newPaths = paths.slice(0, -1);
+      setPaths(newPaths);
     }
   };
 
@@ -436,26 +318,6 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100%', gap: '10px' }}>
       {/* Tool Selection */}
       <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-        {/* Mode Toggle */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <button
-            onClick={() => setIsTextMode(!isTextMode)}
-            style={{
-              padding: '8px 16px',
-              background: 'rgba(255,255,255,0.3)',
-              border: '2px solid white',
-              borderRadius: '6px',
-              color: 'white',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.9rem',
-              minWidth: '100px'
-            }}
-          >
-            {isTextMode ? '✍️ Text' : '✏️ Draw'}
-          </button>
-        </div>
-        
         {/* Color Picker */}
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <label style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>Color:</label>
@@ -478,57 +340,9 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
           ))}
         </div>
         
-        {/* Font Selector (Text Mode Only) */}
-        {isTextMode && (
-          <>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <label style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>Font:</label>
-              <select
-                value={fontFamily}
-                onChange={(e) => setFontFamily(e.target.value)}
-                style={{
-                  padding: '6px 10px',
-                  background: 'rgba(255,255,255,0.2)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: '6px',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '600'
-                }}
-              >
-                {fonts.map(font => (
-                  <option key={font.value} value={font.value} style={{ background: '#667eea', color: 'white' }}>
-                    {font.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <button
-              onClick={() => setIsBold(!isBold)}
-              style={{
-                padding: '6px 14px',
-                background: isBold ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
-                border: isBold ? '2px solid white' : '1px solid rgba(255,255,255,0.3)',
-                borderRadius: '6px',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '0.9rem'
-              }}
-              title="Toggle bold"
-            >
-              B
-            </button>
-          </>
-        )}
-        
-        {/* Line Width / Font Size Selector */}
+        {/* Line Width Selector */}
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <label style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>
-            {isTextMode ? 'Size:' : 'Thickness:'}
-          </label>
+          <label style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>Thickness:</label>
           {lineWidths.map(w => (
             <button
               key={w.value}
@@ -579,32 +393,16 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
           onTouchMove={draw}
           onTouchEnd={endDrawing}
           style={{
-            width: 'auto',
-            height: 'auto',
-            maxWidth: '100%',
-            maxHeight: '100%',
-            aspectRatio: '1',
+            width: 'min(100%, calc(100vh - 300px))',
+            height: 'min(100%, calc(100vh - 300px))',
+            aspectRatio: '1 / 1',
             border: '2px solid rgba(255, 255, 255, 0.3)',
             borderRadius: '8px',
             touchAction: 'none',
-            cursor: isTextMode ? 'text' : 'crosshair',
+            cursor: 'crosshair',
             background: '#fff'
           }}
         />
-        {isTyping && (
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '0.85rem'
-          }}>
-            Type text • Enter to finish • Esc to cancel
-          </div>
-        )}
       </div>
       
       {/* Controls */}
@@ -613,31 +411,31 @@ export default function DrawingCanvas({ socket, targetAudience, swarmId, onSend,
         gap: '10px',
         flexWrap: 'wrap'
       }}>
-        <button onClick={undo} disabled={paths.length === 0 && texts.length === 0} style={{
+        <button onClick={undo} disabled={paths.length === 0} style={{
           ...buttonStyle,
-          background: (paths.length === 0 && texts.length === 0) ? '#555' : '#667eea',
-          opacity: (paths.length === 0 && texts.length === 0) ? 0.5 : 1
-        }} title="Undo last item (Ctrl+Z)">
+          background: paths.length === 0 ? '#555' : '#667eea',
+          opacity: paths.length === 0 ? 0.5 : 1
+        }} title="Undo last stroke (Ctrl+Z)">
           ↶ Undo
         </button>
-        <button onClick={clearCanvas} disabled={paths.length === 0 && texts.length === 0} style={{
+        <button onClick={clearCanvas} disabled={paths.length === 0} style={{
           ...buttonStyle,
-          background: (paths.length === 0 && texts.length === 0) ? '#555' : '#f44336',
-          opacity: (paths.length === 0 && texts.length === 0) ? 0.5 : 1
+          background: paths.length === 0 ? '#555' : '#f44336',
+          opacity: paths.length === 0 ? 0.5 : 1
         }} title="Clear canvas (Backspace/Delete)">
           🗑️ Clear
         </button>
         <button 
           onClick={sendDrawing} 
-          disabled={(paths.length === 0 && texts.length === 0) || !socket || !socket.connected}
+          disabled={paths.length === 0 || !socket || !socket.connected}
           style={{
             ...buttonStyle,
-            background: ((paths.length === 0 && texts.length === 0) || !socket || !socket.connected) ? '#555' : '#4CAF50',
-            opacity: ((paths.length === 0 && texts.length === 0) || !socket || !socket.connected) ? 0.5 : 1,
+            background: (paths.length === 0 || !socket || !socket.connected) ? '#555' : '#4CAF50',
+            opacity: (paths.length === 0 || !socket || !socket.connected) ? 0.5 : 1,
             flex: 1,
             fontSize: '1.1rem'
           }}
-          title="Send drawing to all groups (Ctrl+Enter)"
+          title="Send drawing to all groups (Enter)"
         >
           📤 Send Drawing
           {socket && !socket.connected && ' (Connecting...)'}
@@ -657,5 +455,4 @@ const buttonStyle = {
   fontWeight: '600' as const,
   transition: 'all 0.2s'
 };
-
 
