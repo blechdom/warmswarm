@@ -258,7 +258,6 @@ export default function DrawContinuousPage() {
     'group-3': null,
     'group-4': null
   });
-  const [canvasStatus, setCanvasStatus] = useState('✏️ Continuous mode - each change auto-sends');
   const clearTimeoutIdsRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   const swarmId = 'continuous-drawing-swarm';
@@ -440,29 +439,6 @@ export default function DrawContinuousPage() {
       <Main>
         {/* Left Half: Your Drawing Canvas */}
         <CanvasSection>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '15px',
-            flexShrink: 0,
-            flexWrap: 'wrap',
-            gap: '10px'
-          }}>
-            <h2 style={{ color: 'white', margin: 0, fontSize: '1.3rem' }}>
-              ✏️ Your Canvas {socket ? '🟢' : '🔴'}
-            </h2>
-            <div style={{
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '0.9rem',
-              padding: '6px 12px',
-              background: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '6px',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              {canvasStatus}
-            </div>
-          </div>
           {!socket && (
             <div style={{ padding: '10px', background: 'rgba(255,0,0,0.3)', borderRadius: '6px', marginBottom: '10px', color: 'white', flexShrink: 0 }}>
               ⚠️ Socket not connected. Waiting for connection...
@@ -478,7 +454,6 @@ export default function DrawContinuousPage() {
               targetAudience="all"
               swarmId={swarmId}
               onSend={() => console.log('✅ Drawing sent callback triggered!')}
-              onStatusChange={setCanvasStatus}
             />
           </div>
         </CanvasSection>

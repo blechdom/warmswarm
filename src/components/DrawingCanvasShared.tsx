@@ -82,10 +82,12 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
   ];
 
   const sizes = [
+    { value: 1 },
     { value: 2 },
     { value: 4 },
     { value: 8 },
     { value: 12 },
+    { value: 16 },
   ];
 
   const fonts = [
@@ -514,18 +516,18 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
         )}
 
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <label style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>Size:</label>
+          <label style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>Thickness:</label>
           {sizes.map(s => (
             <button
               key={s.value}
               onClick={() => setLineWidth(s.value)}
               title={`${s.value}px`}
               style={{
-                width: '32px',
-                height: '32px',
+                width: '36px',
+                height: '24px',
                 background: lineWidth === s.value ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
                 border: lineWidth === s.value ? '2px solid white' : '1px solid rgba(255,255,255,0.3)',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -533,10 +535,10 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
               }}
             >
               <div style={{
-                width: `${s.value * 2}px`,
-                height: `${s.value * 2}px`,
-                borderRadius: '50%',
-                background: 'white'
+                width: '24px',
+                height: `${s.value}px`,
+                background: 'white',
+                borderRadius: '2px'
               }} />
             </button>
           ))}
