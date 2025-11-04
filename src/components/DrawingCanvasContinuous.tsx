@@ -536,22 +536,49 @@ export default function DrawingCanvasContinuous({ socket, targetAudience, swarmI
       {/* Tool Selection */}
       <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
         {/* Mode Toggle */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '3px', background: 'rgba(0,0,0,0.4)', borderRadius: '6px' }}>
           <button
-            onClick={() => setIsTextMode(!isTextMode)}
+            onClick={() => setIsTextMode(false)}
+            title="Draw Mode"
             style={{
-              padding: '8px 16px',
-              background: 'rgba(255,255,255,0.3)',
-              border: '2px solid white',
-              borderRadius: '6px',
+              padding: '6px 12px',
+              background: !isTextMode ? 'rgba(59, 130, 246, 0.9)' : 'rgba(255,255,255,0.1)',
+              border: !isTextMode ? '2px solid white' : '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '5px',
               color: 'white',
               cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.9rem',
-              minWidth: '100px'
+              fontSize: '1.1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              boxShadow: !isTextMode ? '0 0 8px rgba(59, 130, 246, 0.5)' : 'none',
+              transition: 'all 0.2s ease'
             }}
           >
-            {isTextMode ? '✍️ Text' : '✏️ Draw'}
+            🖌️
+          </button>
+          <button
+            onClick={() => setIsTextMode(true)}
+            title="Text Mode"
+            style={{
+              padding: '6px 12px',
+              background: isTextMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(255,255,255,0.1)',
+              border: isTextMode ? '2px solid white' : '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '5px',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              boxShadow: isTextMode ? '0 0 8px rgba(168, 85, 247, 0.5)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Aa
           </button>
         </div>
         
