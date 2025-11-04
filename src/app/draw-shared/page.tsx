@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
+import Link from 'next/link';
 import DrawingCanvasShared from '@/components/DrawingCanvasShared';
 import styled from 'styled-components';
 
@@ -21,15 +22,38 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   gap: 15px;
+`;
+
+const HomeLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+  }
+`;
+
+const LogoImage = styled.img`
+  height: 2rem;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 `;
 
 const Title = styled.h1`
   color: white;
-  font-size: 1.5rem;
+  font-size: 1rem;
   margin: 0;
   font-weight: 700;
+  text-align: center;
+  flex: 1;
 `;
 
 const Main = styled.main`
@@ -50,31 +74,17 @@ const CanvasContainer = styled.div`
   flex-direction: column;
 `;
 
-const BackButton = styled.button`
-  color: white;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: rgba(0, 0, 0, 0.5);
-  }
-`;
-
 const StatusIndicator = styled.div`
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.3);
-  borderRadius: 8px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 `;
 
 export default function DrawSharedPage() {
@@ -140,15 +150,20 @@ export default function DrawSharedPage() {
   return (
     <Container>
       <Header>
+        <HomeLink href="/">
+          warm
+          <LogoImage 
+            src="/warmswarm-logo-transparent.png" 
+            alt="WarmSwarm Logo"
+          />
+          swarm
+        </HomeLink>
         <Title>
           🖼️ Shared Canvas {socket ? '🟢' : '🔴'}
         </Title>
         <StatusIndicator>
           👥 {participantCount} {participantCount === 1 ? 'person' : 'people'} drawing
         </StatusIndicator>
-        <BackButton onClick={() => window.location.href = '/'}>
-          ← Back to Home
-        </BackButton>
       </Header>
 
       <Main>

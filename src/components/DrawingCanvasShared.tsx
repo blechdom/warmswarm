@@ -238,23 +238,31 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
           e.preventDefault();
           // Finish text and send
           if (currentText.trim() && textPosition) {
-            // First, render the text to the canvas
             const canvas = canvasRef.current;
-            if (canvas) {
+            if (canvas && socket && socket.connected) {
               const ctx = canvas.getContext('2d');
               if (ctx) {
+                // Render the text directly to the canvas
                 ctx.fillStyle = color;
                 const fontWeight = isBold ? 'bold' : 'normal';
                 ctx.font = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
                 ctx.fillText(currentText, textPosition.x, textPosition.y);
+                
+                // Immediately capture and send the canvas BEFORE clearing state
+                const imageData = canvas.toDataURL('image/png');
+                socket.emit('send-drawing', {
+                  swarmId: swarmId,
+                  target: 'all',
+                  imageData: imageData,
+                  timestamp: Date.now()
+                });
+                
+                // Now clear the typing state
+                setIsTyping(false);
+                setCurrentText('');
+                setTextPosition(null);
               }
             }
-            
-            // Then clear the typing state and send
-            setIsTyping(false);
-            setCurrentText('');
-            setTextPosition(null);
-            setTimeout(() => sendCanvas(), 10);
           }
         } else if (e.key === 'Escape') {
           setCurrentText('');
@@ -273,7 +281,7 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTextMode, isTyping, currentText, textPosition, color, lineWidth, fontFamily, isBold]);
+  }, [isTextMode, isTyping, currentText, textPosition, color, lineWidth, fontFamily, isBold, socket, swarmId]);
 
   const getCoordinates = (e: MouseEvent | TouchEvent): Point => {
     const canvas = canvasRef.current;
@@ -294,25 +302,32 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
 
     if (isTextMode) {
       if (isTyping && currentText.trim()) {
-        // Finish previous text: render it to canvas first
+        // Finish previous text: render it to canvas and send immediately
         const canvas = canvasRef.current;
-        if (canvas && textPosition) {
+        if (canvas && textPosition && socket && socket.connected) {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.fillStyle = color;
             const fontWeight = isBold ? 'bold' : 'normal';
             ctx.font = `${fontWeight} ${lineWidth * 3}px ${fontFamily}`;
             ctx.fillText(currentText, textPosition.x, textPosition.y);
+            
+            // Immediately capture and send BEFORE clearing state
+            const imageData = canvas.toDataURL('image/png');
+            socket.emit('send-drawing', {
+              swarmId: swarmId,
+              target: 'all',
+              imageData: imageData,
+              timestamp: Date.now()
+            });
           }
         }
         
-        // Clear typing state and send
+        // Clear typing state and start new text
         setIsTyping(false);
         setCurrentText('');
         setTextPosition(null);
         setTimeout(() => {
-          sendCanvas();
-          // Then start new text
           const point = getCoordinates(e.nativeEvent);
           setTextPosition(point);
           setCurrentText('');
@@ -391,42 +406,49 @@ export default function DrawingCanvasShared({ socket, swarmId, onStatusChange }:
   return (
     <CanvasWrapper>
       <ToolBar>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '4px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '3px', background: 'rgba(0,0,0,0.4)', borderRadius: '6px' }}>
           <button
             onClick={() => setIsTextMode(false)}
+            title="Draw Mode"
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               background: !isTextMode ? 'rgba(59, 130, 246, 0.9)' : 'rgba(255,255,255,0.1)',
               border: !isTextMode ? '2px solid white' : '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '6px',
+              borderRadius: '5px',
               color: 'white',
               cursor: 'pointer',
-              fontWeight: !isTextMode ? '700' : '500',
-              fontSize: '0.9rem',
-              minWidth: '90px',
-              boxShadow: !isTextMode ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none',
+              fontSize: '1.1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              boxShadow: !isTextMode ? '0 0 8px rgba(59, 130, 246, 0.5)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
-            ✏️ Draw
+            🖌️
           </button>
           <button
             onClick={() => setIsTextMode(true)}
+            title="Text Mode"
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               background: isTextMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(255,255,255,0.1)',
               border: isTextMode ? '2px solid white' : '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '6px',
+              borderRadius: '5px',
               color: 'white',
               cursor: 'pointer',
-              fontWeight: isTextMode ? '700' : '500',
-              fontSize: '0.9rem',
-              minWidth: '90px',
-              boxShadow: isTextMode ? '0 0 10px rgba(168, 85, 247, 0.5)' : 'none',
+              fontSize: '1rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              boxShadow: isTextMode ? '0 0 8px rgba(168, 85, 247, 0.5)' : 'none',
               transition: 'all 0.2s ease'
             }}
           >
-            ✍️ Text
+            Aa
           </button>
         </div>
 

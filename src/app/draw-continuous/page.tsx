@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import Link from 'next/link';
 import DrawingCanvasContinuous from '@/components/DrawingCanvasContinuous';
 import styled from 'styled-components';
 
@@ -21,15 +22,49 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   gap: 15px;
+`;
+
+const HomeLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+  }
+`;
+
+const LogoImage = styled.img`
+  height: 2rem;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 `;
 
 const Title = styled.h1`
   color: white;
-  font-size: 1.5rem;
+  font-size: 1rem;
   margin: 0;
   font-weight: 700;
+  text-align: center;
+  flex: 1;
+`;
+
+const GroupLabel = styled.div`
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
 `;
 
 const Main = styled.main`
@@ -386,12 +421,20 @@ export default function DrawContinuousPage() {
   return (
     <Container>
       <Header>
+        <HomeLink href="/">
+          warm
+          <LogoImage 
+            src="/warmswarm-logo-transparent.png" 
+            alt="WarmSwarm Logo"
+          />
+          swarm
+        </HomeLink>
         <Title>
-          🎨 Collaborative Drawing (Continuous) - You are {selectedGroup.replace('-', ' ').toUpperCase()}
+          Continuous Drawing
         </Title>
-        <BackButton onClick={() => window.location.href = '/demos'}>
-          ← Back
-        </BackButton>
+        <GroupLabel>
+          {selectedGroup.replace('-', ' ').toUpperCase()}
+        </GroupLabel>
       </Header>
 
       <Main>
